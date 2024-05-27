@@ -1,0 +1,30 @@
+dept,Department number
+cat,Category number
+store,Store number
+fineline,Fineline number
+prime_item,Item number
+HO_retail,Home Office (HO) retail price
+Store_retail,Store retail price
+gate_dt,Gate date
+gate_nbr,Gate number
+on_hands,Quantity on hands
+proj_inv_at_gate,Projected inventory at gate
+Daily_avg_unit_sales,Daily average unit sales
+prev_gate_date,Previous gate date
+cmd_cat_nbr,CMD provided category number
+recommended_retail,Recommended retail price
+group_retail,Group retail price
+mkdn_pct,Markdown percentage
+mkdn_spend,Markdown spend
+est_gate_sales,Estimated gate sales
+elasticity_val,Elasticity value
+str_expected_w_MD,Sell Through Rate (STR) expected with markdown
+str_expected_no_MD,Sell Through Rate (STR) expected without markdown
+max_possible_STR,Maximum possible Sell Through Rate (STR)
+min_price_point,minimum price point
+max_price_point,maximum price point
+target_str,target Sell Through Rate (STR)
+markdown_reason,Markdown reason
+plan_id,Plan ID
+created_timestamp,
+upstream_inv,Upstream inventory
