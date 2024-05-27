@@ -22,7 +22,7 @@ def load():
     ``
     {schema}
     ``
-    As data analysis expert, your job is to write a SQL query which can return the output the user expects from this table.
+    As data analysis expert, your job is to write a SQL query which can return the output the user expects from this table. Don't add any comments in the query. Don't give any explanation of the query. Limit the query to return a maximum of 10 records only. Give meaningful aliases to all the calculated columns in the query. The aliases should be in snake case.
     """
 
     with st.spinner(text="Loading chat..."):
