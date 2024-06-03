@@ -7,6 +7,8 @@ import vertexai
 from vertexai.generative_models import GenerativeModel
 from google.cloud import bigquery
 
+import prompts
+
 bq_clnt = bigquery.Client(project="wmt-mtech-assortment-ml-prod")
 
 st.header("Chat with an AI Markdown analyst 🤖 💬")
@@ -22,8 +24,9 @@ def load():
     ``
     {schema}
     ``
-    As data analysis expert, your job is to write a SQL query which can return the output the user expects from this table. Don't add any comments in the query. Don't give any explanation of the query. Limit the query to return a maximum of 10 records only. Give meaningful aliases to all the calculated columns in the query. The aliases should be in snake case.
+    As data analysis expert, your job is to write a SQL query which can return the output the user expects from this table.
     """
+    sys_prom = prompts.generate_few_shot_prompt(sys_prom)
 
     with st.spinner(text="Loading chat..."):
         vertexai.init(project="wmt-mtech-assortment-ml-prod", location="us-central1")
@@ -45,10 +48,10 @@ for message in st.session_state.messages: # display the prior chat messages
 if st.session_state.messages[-1]["role"] != "assistant":
     with st.chat_message("assistant"):
         with st.spinner("Working..."):
+            prom = prompts.generate_prompt(prom)
             response = chat_model.send_message([prom], generation_config=gen_conf)
             answer = response.to_dict()['candidates'][0]['content']['parts'][0]['text']
-            cln_ans = answer.strip().strip('\n').strip() # clean the response
-            query = re.sub('^sql', '', cln_ans.strip('`')) # extract SQL from markdown
+            query = re.findall("```sql( .*?)```", answer)[0].strip().strip('\n').strip()
             out = f"""```sql
             {query}
             """ # add markdown to pretty print the SQL
