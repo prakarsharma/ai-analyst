@@ -1,3 +1,4 @@
+column,description
 dept,Department number
 cat,Category number
 store,Store number
@@ -26,5 +27,5 @@ max_price_point,maximum price point
 target_str,target Sell Through Rate (STR)
 markdown_reason,Markdown reason
 plan_id,Plan ID
-created_timestamp,
+created_timestamp,plan creation timestamp
 upstream_inv,Upstream inventory

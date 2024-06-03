@@ -19,7 +19,7 @@ if "messages" not in st.session_state.keys(): # Initialize the chat message hist
 def load():
 
     table = 'clearance_markdown_ml_prod.vm_final_recommendations_pd'
-    schema = ',\n'.join([f"{_[0]} : {_[1]}" for i,_ in pd.read_csv("price_drivers_table.csv", header=None).iterrows()])
+    schema = ',\n'.join([f"{_['column']} : {_['description']}" for i,_ in pd.read_csv("price_drivers_table.csv").iterrows()])
     sys_prom = f"""Consider a table named '{table}' with column names and their meanings provided below in a dictionary format enclosed in double backticks:
     ``
     {schema}
