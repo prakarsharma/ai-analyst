@@ -1,6 +1,15 @@
 
 import pandas as pd
 
+schema = ',\n'.join([f"{_['column']} : {_['description']}" for i,_ in pd.read_csv("price_drivers_table.csv").iterrows()])
+
+system_prompt = f"""Consider a table named 'clearance_markdown_ml_prod.vm_final_recommendations_pd' with column names and their meanings provided below in a dictionary format enclosed in double backticks:
+``
+{schema}
+``
+As data analysis expert, your job is to write a SQL query which can return the output the user expects from this table.
+"""
+
 examples = [_.to_dict() for i,_ in pd.read_csv('CoT_few_shot_examples.csv').iterrows()]
 
 def prompt_template(question, plan_id, data, column_names, where, where_clause, group_by, outputs, calculations, statement, sql):
@@ -34,7 +43,7 @@ step 11. Return the generated SQL in markdown format (starting with triple backt
 """
     return prompt
 
-def generate_few_shot_prompt(system_prompt):
+def generate_few_shot_prompt(system_prompt=system_prompt):
     few_shot_prompt = "\n\n".join([prompt_template(**_) for _ in examples])
     system_prompt += f"""Follow the examples provided below enclosed in triple backticks and answer in the same step-by-step format:
 ```

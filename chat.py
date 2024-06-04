@@ -17,17 +17,7 @@ if "messages" not in st.session_state.keys(): # Initialize the chat message hist
 
 @st.cache_resource(show_spinner=True)
 def load():
-
-    table = 'clearance_markdown_ml_prod.vm_final_recommendations_pd'
-    schema = ',\n'.join([f"{_['column']} : {_['description']}" for i,_ in pd.read_csv("price_drivers_table.csv").iterrows()])
-    sys_prom = f"""Consider a table named '{table}' with column names and their meanings provided below in a dictionary format enclosed in double backticks:
-    ``
-    {schema}
-    ``
-    As data analysis expert, your job is to write a SQL query which can return the output the user expects from this table.
-    """
-    sys_prom = prompts.generate_few_shot_prompt(sys_prom)
-
+    sys_prom = prompts.generate_few_shot_prompt()
     with st.spinner(text="Loading chat..."):
         vertexai.init(project="wmt-mtech-assortment-ml-prod", location="us-central1")
         model = GenerativeModel("gemini-1.0-pro-002", system_instruction=[sys_prom])
