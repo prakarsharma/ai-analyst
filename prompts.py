@@ -1,8 +1,9 @@
 
 import pandas as pd
-from few_shot import table, example
 
-def prompt_template(question, plan_id, data, column_names, where, where_clause, group_by, outputs, calculations, statement, sql, table=table):
+examples = [_.to_dict() for i,_ in pd.read_csv('CoT_few_shot_examples.csv').iterrows()]
+
+def prompt_template(question, plan_id, data, column_names, where, where_clause, group_by, outputs, calculations, statement, sql):
     prompt = f"""Question: {question}
 Let's think step by step,
 Answer: 
@@ -18,7 +19,7 @@ step 5: Write the WHERE clause in GoogleSQL.
 {where_clause}
 step 6: Add a condition to the WHERE clause to get the records only for the latest timestamp.
 
-created_timestamp = (SELECT MAX(created_timestamp) FROM {table} WHERE plan_id = {plan_id})
+created_timestamp = (SELECT MAX(created_timestamp) FROM clearance_markdown_ml_prod.vm_final_recommendations_pd WHERE plan_id = {plan_id})
 
 step 7: Identify the columns to group by.
 {group_by}
@@ -34,10 +35,10 @@ step 11. Return the generated SQL in markdown format (starting with triple backt
     return prompt
 
 def generate_few_shot_prompt(system_prompt):
-    examples = "\n\n".join([prompt_template(**example_i) for i, example_i in example.items()])
+    few_shot_prompt = "\n\n".join([prompt_template(**_) for _ in examples])
     system_prompt += f"""Follow the examples provided below enclosed in triple backticks and answer in the same step-by-step format:
 ```
-{examples}
+{few_shot_prompt}
 ```
 """
     return system_prompt
