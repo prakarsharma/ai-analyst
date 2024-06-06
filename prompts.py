@@ -1,13 +1,17 @@
 
 import pandas as pd
 
-schema = ',\n'.join([f"{_['column']} : {_['description']}" for i,_ in pd.read_csv("price_drivers_table.csv").iterrows()])
+schema = ',\n'.join([f"{_['fullname']} : {_['description']}" for i,_ in pd.read_csv("price_drivers_table.csv").iterrows()])
+metrics = ',\n'.join([f"{_['fullname']} : {_['definition']}" for i,_ in pd.read_csv("metrics.csv").iterrows()])
 
-system_prompt = f"""Consider a table named 'clearance_markdown_ml_prod.vm_final_recommendations_pd' with column names and their meanings provided below in a dictionary format enclosed in double backticks:
+system_prompt = f"""Consider a table named 'clearance_markdown_ml_prod.vm_final_recommendations_pd'. Use the schema with column names and their meanings provided below in a dictionary format enclosed in double backticks:
 ``
 {schema}
 ``
-As data analysis expert, your job is to write a SQL query which can return the output the user expects from this table.
+As data analysis expert, your job is to write a SQL query which can return the output the user expects from this table. Use the metrics definitions provided below in a dictionary format enclosed in double backticks:
+``
+{metrics}
+``
 """
 
 examples = [_.to_dict() for i,_ in pd.read_csv('CoT_few_shot_examples.csv').iterrows()]
@@ -20,7 +24,7 @@ step 1: Note the plan no.
 {plan_id}
 step 2: Find what data is required from the table.
 {data}
-step 3: Fetch corresponding column names from the data dictionary.
+step 3: Fetch corresponding column names from the schema.
 {column_names}
 step 4: Identify the filter conditions.
 {where}
