@@ -1,7 +1,5 @@
-question,plan_id,data,column_names,where,where_clause,group_by,outputs,calculations,statement,sql
+question,data,column_names,where,where_clause,group_by,outputs,calculations,statement,sql
 Plan no. 3800009. What is the avg markdown percent for the items in department 34?,"
-3800009
-","
 1. plan
 2. department
 3. timestamp
@@ -12,20 +10,19 @@ Plan no. 3800009. What is the avg markdown percent for the items in department 3
 ","
 1. plan is 3800009
 2. department is 34
+3. plan is latest
 ","
-WHERE plan_id = 3800009 AND dept = 34
+WHERE plan_id = 3800009 AND dept = 34 AND created_timestamp = (SELECT MAX(created_timestamp) FROM clearance_markdown_ml_prod.vm_final_recommendations_pd WHERE plan_id = 3800009)
 ","
 none
 ","
 1. average markdown percent
 ","
-1. from metrics definitions, average markdown percent is total dollar markdown divided by total markdown  prior price. Dollar markdown is the difference of markdown prior price and the markdown price. From the schema, markdown prior price is 'group_retail' and markdown price is 'recommended_retail'.
+1. from metrics definitions, average markdown percent is total dollar markdown divided by total markdown prior price. Dollar markdown is the difference of markdown prior price and the markdown price. From the schema, markdown prior price is 'group_retail' and markdown price is 'recommended_retail'.
 ","
-SELECT SUM(group_retail - recommended_retail)/ SUM(group_retail) AS avg_markdown_percent
-",SELECT SUM(group_retail - recommended_retail)/ SUM(group_retail) AS avg_markdown_percent FROM clearance_markdown_ml_prod.vm_final_recommendations_pd WHERE plan_id = 3800009 AND dept = 34 AND created_timestamp = (SELECT MAX(created_timestamp) FROM clearance_markdown_ml_prod.vm_final_recommendations_pd WHERE plan_id = 3800009);
+SELECT SUM(group_retail - recommended_retail)/ SUM(group_retail)) AS avg_markdown_percent
+",SELECT SUM(group_retail - recommended_retail)/ SUM(group_retail)) AS avg_markdown_percent FROM clearance_markdown_ml_prod.vm_final_recommendations_pd WHERE plan_id = 3800009 AND dept = 34 AND created_timestamp = (SELECT MAX(created_timestamp) FROM clearance_markdown_ml_prod.vm_final_recommendations_pd WHERE plan_id = 3800009);
 What is the average sell through rate for the plan 3800036?,"
-3800036
-","
 1. plan
 2. timestamp
 ","
@@ -33,8 +30,9 @@ What is the average sell through rate for the plan 3800036?,"
 2. timestamp is 'created_timestamp'
 ","
 1. plan is 3800036
+2. plan is latest
 ","
-WHERE plan_id = 3800036
+WHERE plan_id = 3800036 AND created_timestamp = (SELECT MAX(created_timestamp) FROM clearance_markdown_ml_prod.vm_final_recommendations_pd WHERE plan_id = 3800036)
 ","
 none
 ","
@@ -43,11 +41,9 @@ none
 ","
 1. from metrics definitions, average sell through rate is the ratio of total units sold and total starting inventory. From the schema, units sold is 'est_gate_sales' and starting inventory is 'proj_inv_at_gate'.
 ","
-SELECT SUM(est_gate_sales)/SUM(proj_inv_at_gate) AS average_sell_through_rate
-",SELECT SUM(est_gate_sales)/SUM(proj_inv_at_gate) AS average_sell_through_rate FROM clearance_markdown_ml_prod.vm_final_recommendations_pd WHERE plan_id = 3800036 AND created_timestamp = (SELECT MAX(created_timestamp) FROM clearance_markdown_ml_prod.vm_final_recommendations_pd WHERE plan_id = 3800036);
+SELECT (SUM(est_gate_sales)/SUM(proj_inv_at_gate)) AS average_sell_through_rate
+",SELECT (SUM(est_gate_sales)/SUM(proj_inv_at_gate)) AS average_sell_through_rate FROM clearance_markdown_ml_prod.vm_final_recommendations_pd WHERE plan_id = 3800036 AND created_timestamp = (SELECT MAX(created_timestamp) FROM clearance_markdown_ml_prod.vm_final_recommendations_pd WHERE plan_id = 3800036);
 Number of items by gate in the plan no. 3780638,"
-3780638
-","
 1. item
 2. gate
 3. plan
@@ -59,8 +55,9 @@ Number of items by gate in the plan no. 3780638,"
 4. timestamp is 'created_timestamp'
 ","
 1. plan is 3780638
+2. plan is latest
 ","
-WHERE plan_id = 3780638
+WHERE plan_id = 3780638 AND created_timestamp = (SELECT MAX(created_timestamp) FROM clearance_markdown_ml_prod.vm_final_recommendations_pd WHERE plan_id = 3780638)
 ","
 gate
 ","
@@ -69,10 +66,8 @@ gate
 1. number of items by gate is the count of unique items for each group by gate
 ","
 SELECT gate_nbr AS gate, COUNT(DISTINCT prime_item) AS items
-","SELECT gate_nbr AS gate, COUNT(DISTINCT prime_item) AS items FROM clearance_markdown_ml_prod.vm_final_recommendations_pd WHERE plan_id = 3780638 AND created_timestamp = (SELECT MAX(created_timestamp) FROM clearance_markdown_ml_prod.vm_final_recommendations_pd WHERE plan_id = 3780638) GROUP BY gate;"
+","SELECT gate_nbr AS gate, COUNT(DISTINCT prime_item) AS items FROM FROM clearance_markdown_ml_prod.vm_final_recommendations_pd WHERE plan_id = 3780638 AND created_timestamp = (SELECT MAX(created_timestamp) FROM clearance_markdown_ml_prod.vm_final_recommendations_pd WHERE plan_id = 3780638) GROUP BY gate;"
 Average RR for plan 3780640,"
-3780640
-","
 1. plan
 2. timestamp
 ","
@@ -80,20 +75,19 @@ Average RR for plan 3780640,"
 2. timestamp is 'created_timestamp'
 ","
 1. plan is 3780640
+2. plan is latest
 ","
-WHERE plan_id = 3780640
+WHERE plan_id = 3780640 AND created_timestamp = (SELECT MAX(created_timestamp) FROM clearance_markdown_ml_prod.vm_final_recommendations_pd WHERE plan_id = 3780640)
 ","
 none
 ","
-1. average RR
+1. average recovery rate
 ","
-1. from metrics definitions, average RR is the ratio of total GMV to total IRV. GMV is units sold times the markdown price. IRV is starting inventory times the markdown prior price. From the schema, units sold is 'est_gate_sales', markdown price is 'recommended_retail', starting inventory is 'proj_inv_at_gate' and markdown prior price is 'group_retail'.
+1. from metrics definitions, average recovery rate is the ratio of total GMV to total IRV. GMV is units sold times the markdown price. IRV is starting inventory times the markdown prior price. From the schema, units sold is 'est_gate_sales', markdown price is 'recommended_retail', starting inventory is 'proj_inv_at_gate' and markdown prior price is 'group_retail'.
 ","
 SELECT SUM(est_gate_sales * recommended_retail)/ SUM(proj_inv_at_gate * group_retail) AS average_rr
 ",SELECT SUM(est_gate_sales * recommended_retail)/ SUM(proj_inv_at_gate * group_retail) AS average_rr FROM clearance_markdown_ml_prod.vm_final_recommendations_pd WHERE plan_id = 3780640 AND created_timestamp = (SELECT MAX(created_timestamp) FROM clearance_markdown_ml_prod.vm_final_recommendations_pd WHERE plan_id = 3780640);
 Can you tell me the wt avg markdown by gate? Plan 3780643.,"
-3780643
-","
 1. plan
 2. timestamp
 ","
@@ -101,20 +95,20 @@ Can you tell me the wt avg markdown by gate? Plan 3780643.,"
 2. timestamp is 'created_timestamp'
 ","
 1. plan is 3780643
+2. plan is latest
 ","
-WHERE plan_id = 3780643
+WHERE plan_id = 3780643 AND created_timestamp = (SELECT MAX(created_timestamp) FROM clearance_markdown_ml_prod.vm_final_recommendations_pd WHERE plan_id = 3780643)
 ","
 gate
 ","
-1. wt avg markdown by gate
+1. weighted average markdown percent by gate
 ","
-1. from metrics definitions, wt avg markdown by gate is total weighted markdown percent divided by the total starting inventory for each group by gate. Weighted markdown percent is markdown percent times the starting inventory. Markdown percent is dollar markdown as a fraction of the markdown prior price. Dollar markdown is the difference of markdown prior price and the markdown price. From the schema, markdown prior price is 'group_retail', markdown price is 'recommended_retail' and starting inventory is 'proj_inv_at_gate'.
+1. from metrics definitions, weighted average markdown percent is total weighted markdown percent divided by the total starting inventory for each group by gate. Weighted markdown percent is markdown percent times the starting inventory. From the schema, markdown percent is 
+'mkdn_pct' and starting inventory is 'proj_inv_at_gate'.
 ","
-SELECT gate_nbr AS gate, SUM(((group_retail - recommended_retail)/ group_retail) * proj_inv_at_gate)/ SUM(proj_inv_at_gate) AS wt_avg_markdown
-","SELECT gate_nbr AS gate, SUM(((group_retail - recommended_retail)/ group_retail) * proj_inv_at_gate)/ SUM(proj_inv_at_gate) AS wt_avg_markdown FROM clearance_markdown_ml_prod.vm_final_recommendations_pd WHERE plan_id = 3780643 AND created_timestamp = (SELECT MAX(created_timestamp) FROM clearance_markdown_ml_prod.vm_final_recommendations_pd WHERE plan_id = 3780643) GROUP BY gate;"
+SELECT gate_nbr AS gate, SUM(mkdn_pct * proj_inv_at_gate)/ SUM(proj_inv_at_gate)) AS wt_avg_markdown
+","SELECT gate_nbr AS gate, SUM(mkdn_pct * proj_inv_at_gate)/ SUM(proj_inv_at_gate)) AS wt_avg_markdown FROM clearance_markdown_ml_prod.vm_final_recommendations_pd WHERE plan_id = 3780643 AND created_timestamp = (SELECT MAX(created_timestamp) FROM clearance_markdown_ml_prod.vm_final_recommendations_pd WHERE plan_id = 3780643) GROUP BY gate;"
 "Plan #3852025, what's the 90th percentile markdown?","
-3852025
-","
 1. plan
 2. timestamp
 ","
@@ -122,15 +116,57 @@ SELECT gate_nbr AS gate, SUM(((group_retail - recommended_retail)/ group_retail)
 2. timestamp is 'created_timestamp'
 ","
 1. plan is 3852025
+2. plan is latest
 ","
-WHERE plan_id = 3852025
+WHERE plan_id = 3852025 AND created_timestamp = (SELECT MAX(created_timestamp) FROM clearance_markdown_ml_prod.vm_final_recommendations_pd WHERE plan_id = 3852025)
 ","
 none
 
 ","
-1. 90th percentile markdown
+1. p90 markdown percent
 ","
-1. from metrics definitions, 90th percentile markdown is the 90th percentile of markdown percent. From the schema, markdown percent is 'mkdn_pct'.
+1. from metrics definitions, p90 markdown percent is the 90th percentile of markdown percent. From the schema, markdown percent is 'mkdn_pct'.
 ","
 SELECT APPROX_QUANTILES(mkdn_pct, 100)[OFFSET(90)] AS percentile_90_markdown
 ","SELECT APPROX_QUANTILES(mkdn_pct, 100)[OFFSET(90)] AS percentile_90_markdown FROM clearance_markdown_ml_prod.vm_final_recommendations_pd WHERE plan_id = 3852025 AND created_timestamp = (SELECT MAX(created_timestamp) FROM clearance_markdown_ml_prod.vm_final_recommendations_pd WHERE plan_id = 3852025);"
+Plans created last week.,"
+1. plan
+2. timestamp
+","
+1. plan is 'plan_id'
+2. timestamp is 'created_timestamp'
+","
+1. timestamp is greater or equal to current date minus 1 week
+","
+WHERE created_timestamp >= DATE_SUB(CURRENT_DATE(), INTERVAL 1 WEEK)
+","
+none
+","
+1. number of plans
+","
+1. number of plans is the count of unique plans
+","
+SELECT COUNT(DISTINCT plan_id) AS plans
+","SELECT COUNT(DISTINCT plan_id) AS plans FROM clearance_markdown_ml_prod.vm_final_recommendations_pd WHERE created_timestamp >= DATE_SUB(CURRENT_DATE(), INTERVAL 1 WEEK);"
+Number of plans in May 24 with markdown reason 'STR achieved'.,"
+1. plan
+2. timestamp
+3. markdown reason
+","
+1. plan is 'plan_id'
+2. timestamp is 'created_timestamp'
+3. markdown reason is 'markdown_reason'
+","
+1. timestamp month is May or month number is 5 and year is 2024
+2. markdown reason is 'STR achieved'. From markdown reasons codes, the correponding markdown reason is 'Algo Priced, Sellthrough Expected'
+","
+WHERE EXTRACT(MONTH FROM created_timestamp) = 5 AND EXTRACT(YEAR FROM created_timestamp) = 2024 AND markdown_reason = 'Algo Priced, Sellthrough Expected'
+","
+none
+","
+1. number of plans
+","
+1. number of plans is the count of unique plans
+","
+SELECT COUNT(DISTINCT plan_id) AS plans
+","SELECT COUNT(DISTINCT plan_id) AS plans FROM clearance_markdown_ml_prod.vm_final_recommendations_pd WHERE EXTRACT(MONTH FROM created_timestamp) = 5 AND EXTRACT(YEAR FROM created_timestamp) = 2024 AND markdown_reason = 'Algo Priced, Sellthrough Expected';"

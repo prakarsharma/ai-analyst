@@ -3,6 +3,7 @@ import pandas as pd
 
 schema = ',\n'.join([f"{_['fullname']} : {_['description']}" for i,_ in pd.read_csv("price_drivers_table.csv").iterrows()])
 metrics = ',\n'.join([f"{_['fullname']} : {_['definition']}" for i,_ in pd.read_csv("metrics.csv").iterrows()])
+reasons = ',\n'.join([f"{_['reason']} : {_['Explanation']}" for i,_ in pd.read_csv("markdown_reason_codes.csv").iterrows()])
 
 system_prompt = f"""Consider a table named 'clearance_markdown_ml_prod.vm_final_recommendations_pd'. Use the schema with column names and their meanings provided below in a dictionary format enclosed in double backticks:
 ``
@@ -12,37 +13,36 @@ As data analysis expert, your job is to write a SQL query which can return the o
 ``
 {metrics}
 ``
+For markdown reason codes refer the dictionary provided below enclosed in double backticks:
+``
+{reasons}
+``
+
 """
 
 examples = [_.to_dict() for i,_ in pd.read_csv('CoT_few_shot_examples.csv').iterrows()]
 
-def prompt_template(question, plan_id, data, column_names, where, where_clause, group_by, outputs, calculations, statement, sql):
+def prompt_template(question, data, column_names, where, where_clause, group_by, outputs, calculations, statement, sql):
     prompt = f"""Question: {question}
 Let's think step by step,
 Answer: 
-step 1: Note the plan no.
-{plan_id}
-step 2: Find what data is required from the table.
+step 1: Find what data is required from the table.
 {data}
-step 3: Fetch corresponding column names from the schema.
+step 2: Fetch corresponding column names from the schema.
 {column_names}
-step 4: Identify the filter conditions.
+step 3: Identify the filter conditions.
 {where}
-step 5: Write the WHERE clause in GoogleSQL.
+step 4: Write the WHERE clause in GoogleSQL.
 {where_clause}
-step 6: Add a condition to the WHERE clause to get the records only for the latest timestamp.
-
-created_timestamp = (SELECT MAX(created_timestamp) FROM clearance_markdown_ml_prod.vm_final_recommendations_pd WHERE plan_id = {plan_id})
-
-step 7: Identify the columns to group by.
+step 5: Identify the columns to group by.
 {group_by}
-step 8: Find what outputs are required.
+step 6: Find what outputs are required.
 {outputs}
-step 9: Calculate the outputs.
+step 7: Calculate the outputs.
 {calculations}
-step 10. Write the SELECT statement in GoogleSQL with aliases.
+step 8. Write the SELECT statement in GoogleSQL with aliases.
 {statement}
-step 11. Return the generated SQL in markdown format (starting with triple backticks immediately followed by 'sql' and ending in triple backticks):
+step 9. Return the generated SQL in markdown format (starting with triple backticks immediately followed by 'sql' and ending in triple backticks):
 ```sql {sql} ```
 """
     return prompt
