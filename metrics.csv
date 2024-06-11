@@ -1,14 +1,10 @@
 fullname,definition
-dollar markdown,The difference of markdown prior price and the markdown price.
 markdown percent,Dollar markdown as a fraction of the markdown prior price. Also called discount or just markdown.
 average markdown percent,Total dollar markdown divided by total markdown prior price. Also called avg markdown or avg discount.
 Sell Through Rate (STR),The ratio of units sold and starting inventory.
 average Sell Through Rate,The ratio of total units sold and total starting inventory.
-Gross Merchandize Volume (GMV),Units sold times the markdown price.
-Initital Retail Value (IRV),Starting inventory times the markdown prior price.
 Recovery Rate (RR),The ratio of GMV and IRV.
 average Recovery Rate (RR),The ratio of total GMV to total IRV.
-weighted markdown percent,markdown percent times the starting inventory. Also called wt. discount or wt. markdown.
 weighted average markdown percent,Total weighted markdown percent divided by the total starting inventory. Also called wt. avg. discount or wt. avg. markdown.
 pX markdown percent,"The 'X'th percentile of markdown percent, where 'X' is a number between 0 and 100. Also called 'X'th percentile markdown or discount."
-summary statistics,"avg RR, avg STR, wt. avg. discount, p10 discount, p90 discount, number of items, number of stores, total starting inventory, total markdown spend, total GMV, total units sold"
+summary statistics,"avg RR, avg STR, wt. avg. discount, p10 discount, p90 discount, number of items, number of stores, total starting inventory, total markdown spend, total GMV and total units sold"

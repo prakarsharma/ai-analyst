@@ -1,11 +1,11 @@
 
 import pandas as pd
 
-schema = ',\n'.join([f"{_['fullname']} : {_['description']}" for i,_ in pd.read_csv("price_drivers_table.csv").iterrows()])
+schema = ',\n'.join([f"{_['fullname']} : {_['description']}" for i,_ in pd.read_csv("latest_plan_report_table.csv").iterrows()])
 metrics = ',\n'.join([f"{_['fullname']} : {_['definition']}" for i,_ in pd.read_csv("metrics.csv").iterrows()])
 reasons = ',\n'.join([f"{_['reason']} : {_['Explanation']}" for i,_ in pd.read_csv("markdown_reason_codes.csv").iterrows()])
 
-system_prompt = f"""Consider a table named 'clearance_markdown_ml_prod.vm_final_recommendations_pd'. Use the schema with column names and their meanings provided below in a dictionary format enclosed in double backticks:
+system_prompt = f"""Consider a table named 'clearance_markdown_ml_prod.vm_fin_rec_pd_lat_pln_rpt'. Use the schema with column names and their meanings provided below in a dictionary format enclosed in double backticks:
 ``
 {schema}
 ``
