@@ -41,7 +41,7 @@ if st.session_state.messages[-1]["role"] != "assistant":
             prom = prompts.generate_prompt(prom)
             response = chat_model.send_message([prom], generation_config=gen_conf)
             answer = response.to_dict()['candidates'][0]['content']['parts'][0]['text']
-            query = re.findall("```sql( .*?)```", answer)[0].strip().strip('\n').strip()
+            query = re.findall("<sql>( .*?)</sql>", answer)[0].strip().strip('\n').strip()
             out = f"""```sql
             {query}
             """ # add markdown to pretty print the SQL
