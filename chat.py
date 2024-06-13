@@ -11,9 +11,27 @@ import prompts
 
 bq_clnt = bigquery.Client(project="wmt-mtech-assortment-ml-prod")
 
+st.set_page_config(
+    page_title="AI analyst",
+    page_icon="logo.jpeg",
+    layout="wide",
+)
+
 st.header("Chat with an AI Markdown analyst 🤖 💬")
 if "messages" not in st.session_state.keys(): # Initialize the chat message history
     st.session_state.messages = [{"role": "assistant", "content": "Ask me a question on Markdown..."}]
+
+with st.expander("Sample questions:", expanded=True):
+    st.write(
+        """
+        - What is the average discount for the plan no. 3852025?
+        - Give me the avg discount and avg expected STR by gate. Plan no. 3780638.
+        - Summary statistics plan 3852025.
+        - Consider plan 3780638: what's the distribution by discount?
+        - Consider plans run in the last week. What was the avg STR by target STR?
+        - Any question which is a combination of the above.
+    """
+    )
 
 @st.cache_resource(show_spinner=True)
 def load():
@@ -46,7 +64,7 @@ if st.session_state.messages[-1]["role"] != "assistant":
             {query}
             """ # add markdown to pretty print the SQL
             st.write("running query... 🏃‍➡️")
-            st.write(out)
+            # st.write(out)
             try:
                 records = bq_clnt.query(query).result().to_dataframe()
             except Exception as e:
