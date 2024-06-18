@@ -1,0 +1,3 @@
+llm:
+    name: gemini-1.0-pro
+    gateway_url: https://wmtllmgateway.stage.walmart.com/wmtllmgateway/v1/google-genai

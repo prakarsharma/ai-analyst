@@ -1,42 +1,30 @@
-
-import re
-import pandas as pd
 import streamlit as st
 
-import vertexai
-from vertexai.generative_models import GenerativeModel
-from google.cloud import bigquery
+from models_api.prompt_template import system_prompt, streamlit_message, gemini_chat_api_message
+from models_api.generate import llm
+from utils.cert import load_wmt_ca_bundle
+from utils.config import conf
+from utils.utils import clean_text, bigquery_client
 
-bq_clnt = bigquery.Client(project="wmt-mtech-assortment-ml-prod")
 
 st.header("Chat with an AI Markdown analyst 🤖 💬")
 if "messages" not in st.session_state.keys(): # Initialize the chat message history
-    st.session_state.messages = [{"role": "assistant", "content": "Ask me a question on Markdown..."}]
+    st.session_state.messages = [streamlit_message("assistant", "Ask me a question on Markdown...")]
 
 @st.cache_resource(show_spinner=True)
 def load():
-
-    table = 'clearance_markdown_ml_prod.vm_final_recommendations_pd'
-    schema = ',\n'.join([f"{_[0]} : {_[1]}" for i,_ in pd.read_csv("price_drivers_table.csv", header=None).iterrows()])
-    sys_prom = f"""Consider a table named '{table}' with column names and their meanings provided below in a dictionary format enclosed in double backticks:
-    ``
-    {schema}
-    ``
-    As data analysis expert, your job is to write a SQL query which can return the output the user expects from this table. Don't add any comments in the query. Don't give any explanation of the query. Limit the query to return a maximum of 10 records only. Give meaningful aliases to all the calculated columns in the query. The aliases should be in snake case.
-    """
-
     with st.spinner(text="Loading chat..."):
-        vertexai.init(project="wmt-mtech-assortment-ml-prod", location="us-central1")
-        model = GenerativeModel("gemini-1.0-pro-002", system_instruction=[sys_prom])
-        chat = model.start_chat()
-        return chat
+        load_wmt_ca_bundle()
+        chatbot = llm(conf, system_prompt, st.secrets.llm_gateway.api_key)
+        chat = gemini_chat_api_message()
+        bq_client = bigquery_client()
+        return chatbot, chat, bq_client
 
-chat_model = load()
-gen_conf = {"max_output_tokens": 2048, "temperature": 0.2, "top_p": 1}
-
-prom = st.chat_input("Your question...")
-if prom: # prompt for user input and save to chat history
-    st.session_state.messages.append({"role": "user", "content": prom})
+chatbot, chat, bq_client = load()
+prompt:str = st.chat_input("Your question...")
+if prompt: # prompt for user input and save to chat history
+    st.session_state.messages.append(streamlit_message("user", prompt))
+    chat.append("user", prompt)
 
 for message in st.session_state.messages: # display the prior chat messages
     with st.chat_message(message["role"]):
@@ -45,20 +33,7 @@ for message in st.session_state.messages: # display the prior chat messages
 if st.session_state.messages[-1]["role"] != "assistant":
     with st.chat_message("assistant"):
         with st.spinner("Working..."):
-            response = chat_model.send_message([prom], generation_config=gen_conf)
-            answer = response.to_dict()['candidates'][0]['content']['parts'][0]['text']
-            cln_ans = answer.strip().strip('\n').strip() # clean the response
-            query = re.sub('^sql', '', cln_ans.strip('`')) # extract SQL from markdown
-            out = f"""```sql
-            {query}
-            """ # add markdown to pretty print the SQL
-            st.write("running query... 🏃‍➡️")
-            st.write(out)
-            try:
-                records = bq_clnt.query(query).result().to_dataframe()
-            except Exception as e:
-                st.write("⚠️ uh oh! BigQuery gave an error ⛔️")
-                raise e
-            st.write(records)
-            message = {"role": "assistant", "content": out}
-            st.session_state.messages.append(message) # add response to message history
+            response = clean_text(chatbot.request(chat.messages))
+            chat.append("assistant", response)
+            st.write(response)
+            st.session_state.messages.append(streamlit_message("assistant", response)) # add response to message history
