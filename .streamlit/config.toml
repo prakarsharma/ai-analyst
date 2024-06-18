@@ -1,0 +1,5 @@
+[server]
+runOnSave = true
+# address = 
+# port = 8501
+# baseUrlPath = ''
