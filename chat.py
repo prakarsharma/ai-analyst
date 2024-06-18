@@ -4,7 +4,7 @@ from models_api.prompt_template import system_prompt, streamlit_message, gemini_
 from models_api.generate import llm
 from utils.cert import load_wmt_ca_bundle
 from utils.config import conf
-from utils.utils import clean_text, bigquery_client
+from utils.utils import clean, bigquery_connect
 
 
 st.header("Chat with an AI Markdown analyst 🤖 💬")
@@ -17,7 +17,7 @@ def load():
         load_wmt_ca_bundle()
         chatbot = llm(conf, system_prompt, st.secrets.llm_gateway.api_key)
         chat = gemini_chat_api_message()
-        bq_client = bigquery_client()
+        bq_client = bigquery_connect()
         return chatbot, chat, bq_client
 
 chatbot, chat, bq_client = load()
@@ -33,7 +33,14 @@ for message in st.session_state.messages: # display the prior chat messages
 if st.session_state.messages[-1]["role"] != "assistant":
     with st.chat_message("assistant"):
         with st.spinner("Working..."):
-            response = clean_text(chatbot.request(chat.messages))
+            response = chatbot.request(chat.messages)
             chat.append("assistant", response)
-            st.write(response)
+            st.write("running query... 🏃‍➡️")
+            try:
+                query = clean.strip(clean.unmark_sql(clean.strip(response)))
+                result = bq_client.run(response)
+            except Exception as e:
+                st.write("⚠️ uh oh! BigQuery gave an error ⛔️")
+                raise e
+            st.write(result)
             st.session_state.messages.append(streamlit_message("assistant", response)) # add response to message history

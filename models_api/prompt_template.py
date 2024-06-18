@@ -1,10 +1,11 @@
 from typing import List, Dict
 
+from ops.config import conf
 from utils.utils import schema
 
 
 system_prompt = f"""
-Consider a table named 'clearance_markdown_ml_prod.vm_fin_rec_pd_lat_pln_rpt'. Use the schema with column names and their meanings provided below in a dictionary format enclosed in angular brackets:
+Consider a table named {conf['bigquery']['table']}. Use the schema with column names and their meanings provided below in a dictionary format enclosed in angular brackets:
 <
 {schema()}
 >
