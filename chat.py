@@ -8,6 +8,27 @@ from utils.utils import clean, bigquery_connect
 from utils.logging import get_logger
 
 
+@st.cache_resource(show_spinner="loading certificates...")
+def certificates_loader():
+    load_wmt_ca_bundle()
+
+@st.cache_resource(show_spinner="loading LLM...")
+def llm_loader():
+    return llm(conf, few_shot().system_prompt, st.secrets.llm_gateway.api_key)
+
+@st.cache_resource(show_spinner="loading chat template...")
+def chat_template_loader():
+    return gemini_chat_api_message()
+
+@st.cache_resource(show_spinner="loading BigQuery connector...")
+def bigquery_connector_loader():
+    return bigquery_connect()
+
+@st.cache_resource(show_spinner="loading logger...")
+def logger_loader():
+    return get_logger()
+
+
 st.set_page_config(
     page_title="AI analyst",
     page_icon="conf['streamlit']['icon']",
@@ -30,17 +51,13 @@ with st.expander("Sample questions:", expanded=True):
     """
     )
 
-@st.cache_resource(show_spinner=True)
-def load():
-    with st.spinner(text="Loading chat..."):
-        load_wmt_ca_bundle()
-        chatbot = llm(conf, few_shot().system_prompt, st.secrets.llm_gateway.api_key)
-        chat = gemini_chat_api_message()
-        bq_client = bigquery_connect()
-        logger = get_logger()
-        return chatbot, chat, bq_client, logger
+with st.spinner("Loading chat..."):
+    certificates_loader()    
+    chatbot = llm_loader()
+    chat = chat_template_loader()
+    bq_client = bigquery_connector_loader()
+    logger = logger_loader()
 
-chatbot, chat, bq_client, logger = load()
 prompt:str = st.chat_input("Your question...")
 if prompt: # prompt for user input and save to chat history
     st.session_state.messages.append(streamlit_message("user", prompt))
