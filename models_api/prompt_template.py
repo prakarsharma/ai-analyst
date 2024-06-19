@@ -71,11 +71,13 @@ step 9. Return the generated SQL enclosed in sql xml tags:
 """
         return prompt
 
-    def format_user_prompt(prompt:str) -> str:
-        return f"""Question: {prompt}
+    def format_user_prompt(role:str, prompt:str) -> str:
+        if role == "user":
+            return f"""Question: {prompt}
 Let's think step by step,
 Answer:
 """
+        return prompt
 
 
 class gemini_chat_api_message:
@@ -84,10 +86,10 @@ class gemini_chat_api_message:
         if user_prompt:
             self.append("user", user_prompt)
 
-    def template(role:str, message:str, formatter:Callable[[str],str]=few_shot.format_user_prompt) -> Dict[str, str]:
+    def template(role:str, message:str, formatter:Callable[[str,str],str]=few_shot.format_user_prompt) -> Dict[str, str]:
         return {
             "role": role,
-            "parts": {"text": formatter(message)}
+            "parts": {"text": formatter(role, message)}
         }
 
     def append(self, role:str, message:str):
