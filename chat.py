@@ -5,6 +5,8 @@ from models_api.generate import llm
 from utils.cert import load_wmt_ca_bundle
 from utils.config import conf
 from utils.utils import clean, bigquery_connect
+from utils.logging import get_logger
+
 
 st.set_page_config(
     page_title="AI analyst",
@@ -35,12 +37,14 @@ def load():
         chatbot = llm(conf, few_shot().system_prompt, st.secrets.llm_gateway.api_key)
         chat = gemini_chat_api_message()
         bq_client = bigquery_connect()
-        return chatbot, chat, bq_client
+        logger = get_logger()
+        return chatbot, chat, bq_client, logger
 
-chatbot, chat, bq_client = load()
+chatbot, chat, bq_client, logger = load()
 prompt:str = st.chat_input("Your question...")
 if prompt: # prompt for user input and save to chat history
     st.session_state.messages.append(streamlit_message("user", prompt))
+    logger.info("prompt: {}", prompt)
     chat.append("user", prompt)
 
 for message in st.session_state.messages: # display the prior chat messages
@@ -50,11 +54,13 @@ for message in st.session_state.messages: # display the prior chat messages
 if st.session_state.messages[-1]["role"] != "assistant":
     with st.chat_message("assistant"):
         with st.spinner("Working..."):
-            response = clean(chatbot.request(chat.messages)).string
+            response = chatbot.request(chat.messages)
+            logger.info("response: {}", response)
             chat.append("assistant", response)
             st.write("running query... 🏃‍➡️")
+            query = clean(response).string
             try:
-                result = bq_client.run(response)
+                result = bq_client.run(query)
             except Exception as e:
                 st.write("⚠️ uh oh! BigQuery gave an error ⛔️")
                 raise e
