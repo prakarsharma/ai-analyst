@@ -19,10 +19,13 @@ reasons = read_metadata(conf["metadata"]["reasons"])
 
 class clean:
     def __init__(self, string):
-        self.string = clean.strip(clean.xml_extract_sql(clean.strip(string)))
+        self.string = clean.strip(clean.xml_extract_sql(clean.ravel(string)))
         
     def strip(string:str) -> str:
         return string.strip().strip("\n").strip()
+
+    def ravel(string:str) -> str:
+        return re.sub("[\\n\\t\\r ]+", " ", string)
 
     def xml_extract_sql(string:str) -> str:
         try:
@@ -34,10 +37,10 @@ class bigquery_connect:
     def __init__(self):
         self.connector:str = conf["bigquery"]["connector"]
         self.table:str = conf["bigquery"]["table"]
-        self.test()
+        # self.test()
 
     def test(self):
-        dataset.load(name=self.connector, query=f"SELECT * FROM {self.table} LIMIT 1;") # one-time connection setting to reduce transactional latency
+        dataset.load(name=self.connector, query=f"") # one-time connection setting to reduce transactional latency
 
     def run(self, query:str, is_sql:bool=True) -> pd.DataFrame:
         if is_sql:
