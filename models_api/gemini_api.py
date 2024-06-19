@@ -24,9 +24,8 @@ class chat_request:
                 },
                 "generation_config": {
                     "maxOutputTokens": 2048,
-                    "temperature": 0.4,
-                    "topP": 1,
-                    "topK": 32
+                    "temperature": 0.2,
+                    "topP": 1
                 },
             }
         }

@@ -6,15 +6,26 @@ from mlutils import dataset
 from utils.config import conf
 
 
-def schema(file="resources/latest_plan_report_table.csv") -> str:
-    return ',\n'.join([f"{_[0]} : {_[1]}" for i,_ in pd.read_csv(file, header=None).iterrows()])
+examples = pd.read_csv(conf["few_shot"]["examples"]).to_dict(orient="records")
+
+
+def read_metadata(resource) -> str:
+    return ',\n'.join([f"{_[0]} : {_[1]}" for i,_ in pd.read_csv(resource, header=None).iterrows()])
+
+schema = read_metadata(conf["metadata"]["schema"])
+metrics = read_metadata(conf["metadata"]["metrics"])
+reasons = read_metadata(conf["metadata"]["reasons"])
+
 
 class clean:
-    def strip(string) -> str:
+    def __init__(self, string):
+        self.string = clean.strip(clean.xml_extract_sql(clean.strip(string)))
+        
+    def strip(string:str) -> str:
         return string.strip().strip("\n").strip()
 
-    def unmark_sql(string):
-        return re.sub("^sql", "", clean.strip(unmark(string).strip("`")))
+    def xml_extract_sql(string:str) -> str:
+        return re.findall("<sql>(.*?)</sql>", string)[0]
 
 class bigquery_connect:
     def __init__(self):

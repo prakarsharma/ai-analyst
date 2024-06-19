@@ -1,19 +1,80 @@
-from typing import List, Dict
+from typing import List, Dict, Callable
 
-from ops.config import conf
-from utils.utils import schema
+from utils.config import conf
+from utils.utils import schema, metrics, reasons, examples
 
 
 system_prompt = f"""
 Consider a table named {conf['bigquery']['table']}. Use the schema with column names and their meanings provided below in a dictionary format enclosed in angular brackets:
 <
-{schema()}
+{schema}
 >
-As data analysis expert, your job is to write a SQL query which can return the output the user expects from this table. Don't add any comments in the query. Don't give any explanation of the query. Limit the query to return a maximum of 10 records only. Give meaningful aliases to all the calculated columns in the query. The aliases should be in snake case. Use GoogleSQL syntax in the query.
+As data analysis expert, your job is to write a SQL query which can return the output the user expects from this table. Use the metrics definitions provided below in a dictionary format enclosed in double angular brackets:
+<<
+{metrics}
+>>
+For markdown reason codes refer the dictionary provided below enclosed in triple angular brackets:
+<<<
+{reasons}
+>>>
+
 """
+
 
 def streamlit_message(role:str, message:str) -> Dict[str, str]:
         return {"role": role, "content": message}
+
+
+class few_shot:
+    def __init__(self, system_prompt:str=system_prompt, examples:List[Dict[str,str]]=examples):
+        self.system_prompt = system_prompt
+        self.few_shot_examples:str = "\n\n".join([few_shot.CoT_prompt(**_) for _ in examples])
+        self.system_prompt += f"""Follow the examples provided below enclosed in quadruple angular brackets and answer in the same step-by-step format:
+<<<<
+{self.few_shot_examples}
+>>>>
+"""
+
+    def CoT_prompt(question:str, 
+                   data:str, 
+                   column_names:str, 
+                   where:str, 
+                   where_clause:str, 
+                   group_by:str, 
+                   outputs:str, 
+                   calculations:str, 
+                   statement:str, 
+                   sql:str) -> str:
+        prompt = f"""Question: {question}
+Let's think step by step,
+Answer: 
+step 1: Find what data is required from the table.
+{data}
+step 2: Fetch corresponding column names from the schema.
+{column_names}
+step 3: Identify the filter conditions.
+{where}
+step 4: Write the WHERE clause in GoogleSQL.
+{where_clause}
+step 5: Identify the columns to group by.
+{group_by}
+step 6: Find what outputs are required.
+{outputs}
+step 7: Calculate the outputs.
+{calculations}
+step 8. Write the SELECT statement in GoogleSQL with aliases.
+{statement}
+step 9. Return the generated SQL enclosed in sql xml tags:
+<sql> {sql} </sql>
+"""
+        return prompt
+
+    def format_user_prompt(prompt:str) -> str:
+        return f"""Question: {prompt}
+Let's think step by step,
+Answer:
+"""
+
 
 class gemini_chat_api_message:
     def __init__(self, user_prompt:str=None):
@@ -21,10 +82,10 @@ class gemini_chat_api_message:
         if user_prompt:
             self.append("user", user_prompt)
 
-    def template(role:str, message:str) -> Dict[str, str]:
+    def template(role:str, message:str, formatter:Callable[[str],str]=few_shot.format_user_prompt) -> Dict[str, str]:
         return {
             "role": role,
-            "parts": {"text": message}
+            "parts": {"text": formatter(message)}
         }
 
     def append(self, role:str, message:str):
