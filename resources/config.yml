@@ -3,7 +3,7 @@ llm:
     gateway_url: https://wmtllmgateway.stage.walmart.com/wmtllmgateway/v1/google-genai
 bigquery:
     connector: gcp-mtech-dev
-    table: clearance_markdown_ml_dev.vm_fin_rec_pd_lat_pln_rpt
+    table: clearance_markdown_ml_dev.vm_fin_rec_pd_lat_pln_tb
 metadata:
     schema: resources/latest_plan_report_table.csv
     metrics: resources/metrics.csv

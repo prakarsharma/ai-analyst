@@ -18,7 +18,7 @@ none
 1. from metrics definitions, average markdown percent is total dollar markdown divided by total markdown prior price. From the schema, dollar markdown is 'dol_mkdn' and markdown prior price is 'current_price'.
 ","
 SELECT SUM(dol_mkdn)/ SUM(current_price) AS avg_markdown_percent
-",SELECT SUM(dol_mkdn)/ SUM(current_price) AS avg_markdown_percent FROM clearance_markdown_ml_dev.vm_fin_rec_pd_lat_pln_rpt WHERE plan_id = 3800009 AND dept = 34;
+",SELECT SUM(dol_mkdn)/ SUM(current_price) AS avg_markdown_percent FROM {price_drivers_table} WHERE plan_id = 3800009 AND dept = 34;
 What is the average sell through rate for the plan 3800036?,"
 1. plan
 ","
@@ -36,7 +36,7 @@ none
 1. from metrics definitions, average sell through rate is the ratio of total units sold and total starting inventory. From the schema, units sold is 'sales_post_md' and starting inventory is 'proj_inv_at_gate'.
 ","
 SELECT SUM(sales_post_md)/SUM(proj_inv_at_gate) AS average_sell_through_rate
-",SELECT SUM(sales_post_md)/SUM(proj_inv_at_gate) AS average_sell_through_rate FROM clearance_markdown_ml_dev.vm_fin_rec_pd_lat_pln_rpt WHERE plan_id = 3800036;
+",SELECT SUM(sales_post_md)/SUM(proj_inv_at_gate) AS average_sell_through_rate FROM {price_drivers_table} WHERE plan_id = 3800036;
 Number of items by gate in the plan no. 3780638,"
 1. item
 2. gate
@@ -57,7 +57,7 @@ gate
 1. number of items by gate is the count of unique items for each group.
 ","
 SELECT gate_nbr AS gate, COUNT(DISTINCT prime_item) AS items
-","SELECT gate_nbr AS gate, COUNT(DISTINCT prime_item) AS items FROM clearance_markdown_ml_dev.vm_fin_rec_pd_lat_pln_rpt WHERE plan_id = 3780638 GROUP BY gate;"
+","SELECT gate_nbr AS gate, COUNT(DISTINCT prime_item) AS items FROM {price_drivers_table} WHERE plan_id = 3780638 GROUP BY gate;"
 Average RR for plan 3780640,"
 1. plan
 ","
@@ -74,7 +74,7 @@ none
 1. from metrics definitions, average recovery rate is the ratio of total GMV to total IRV. From the schema, GMV is 'gmv' and IRV is 'irv'.
 ","
 SELECT SUM(gmv)/ SUM(irv) AS average_rr
-",SELECT SUM(gmv)/ SUM(irv) AS average_rr FROM clearance_markdown_ml_dev.vm_fin_rec_pd_lat_pln_rpt WHERE plan_id = 3780640;
+",SELECT SUM(gmv)/ SUM(irv) AS average_rr FROM {price_drivers_table} WHERE plan_id = 3780640;
 Can you tell me the wt avg markdown by gate? Plan 3780643.,"
 1. plan
 ","
@@ -92,7 +92,7 @@ gate
 'wt_mkdn_pct' and starting inventory is 'proj_inv_at_gate'.
 ","
 SELECT gate_nbr AS gate, SUM(wt_mkdn_pct )/ SUM(proj_inv_at_gate) AS wt_avg_markdown
-","SELECT gate_nbr AS gate, SUM(wt_mkdn_pct )/ SUM(proj_inv_at_gate) AS wt_avg_markdown FROM clearance_markdown_ml_dev.vm_fin_rec_pd_lat_pln_rpt WHERE plan_id = 3780643 GROUP BY gate;"
+","SELECT gate_nbr AS gate, SUM(wt_mkdn_pct )/ SUM(proj_inv_at_gate) AS wt_avg_markdown FROM {price_drivers_table} WHERE plan_id = 3780643 GROUP BY gate;"
 "Plan #3852025, what's the 90th percentile markdown?","
 1. plan
 ","
@@ -110,7 +110,7 @@ none
 1. from metrics definitions, 90th percentile markdown is the 90th percentile of markdown percent. From the schema, markdown percent is 'mkdn_pct'.
 ","
 SELECT APPROX_QUANTILES(mkdn_pct, 100)[OFFSET(90)] AS percentile_90_markdown
-","SELECT APPROX_QUANTILES(mkdn_pct, 100)[OFFSET(90)] AS percentile_90_markdown FROM clearance_markdown_ml_dev.vm_fin_rec_pd_lat_pln_rpt WHERE plan_id = 3852025;"
+","SELECT APPROX_QUANTILES(mkdn_pct, 100)[OFFSET(90)] AS percentile_90_markdown FROM {price_drivers_table} WHERE plan_id = 3852025;"
 Plans created last week.,"
 1. plan
 2. timestamp
@@ -120,7 +120,7 @@ Plans created last week.,"
 ","
 1. timestamp is greater or equal to current date minus 1 week
 ","
-WHERE latest_created_timestamp >= DATE_SUB(CURRENT_DATE(), INTERVAL 1 WEEK)
+WHERE DATE(latest_created_timestamp) >= DATE_SUB(CURRENT_DATE(), INTERVAL 1 WEEK)
 ","
 none
 ","
@@ -129,7 +129,7 @@ none
 1. number of plans is the count of unique plans.
 ","
 SELECT COUNT(DISTINCT plan_id) AS plans
-","SELECT COUNT(DISTINCT plan_id) AS plans FROM clearance_markdown_ml_dev.vm_fin_rec_pd_lat_pln_rpt WHERE latest_created_timestamp >= DATE_SUB(CURRENT_DATE(), INTERVAL 1 WEEK);"
+","SELECT COUNT(DISTINCT plan_id) AS plans FROM {price_drivers_table} WHERE DATE(latest_created_timestamp) >= DATE_SUB(CURRENT_DATE(), INTERVAL 1 WEEK);"
 Number of plans in May 24 with markdown reason 'STR achieved'.,"
 1. plan
 2. timestamp
@@ -142,7 +142,7 @@ Number of plans in May 24 with markdown reason 'STR achieved'.,"
 1. timestamp month is May or month number is 5 and year is 2024
 2. markdown reason is 'STR achieved'. From markdown reason codes, the correponding markdown reason is 'Algo Priced, Sellthrough Expected'
 ","
-WHERE EXTRACT(MONTH FROM created_timestamp) = 5 AND EXTRACT(YEAR FROM created_timestamp) = 2024 AND markdown_reason = 'Algo Priced, Sellthrough Expected'
+WHERE EXTRACT(MONTH FROM DATE(latest_created_timestamp)) = 5 AND EXTRACT(YEAR FROM DATE(latest_created_timestamp)) = 2024 AND markdown_reason = 'Algo Priced, Sellthrough Expected'
 ","
 none
 ","
@@ -151,7 +151,7 @@ none
 1. number of plans is the count of unique plans.
 ","
 SELECT COUNT(DISTINCT plan_id) AS plans
-","SELECT COUNT(DISTINCT plan_id) AS plans FROM clearance_markdown_ml_dev.vm_fin_rec_pd_lat_pln_rpt WHERE EXTRACT(MONTH FROM created_timestamp) = 5 AND EXTRACT(YEAR FROM latest_created_timestamp) = 2024 AND markdown_reason = 'Algo Priced, Sellthrough Expected';"
+","SELECT COUNT(DISTINCT plan_id) AS plans FROM {price_drivers_table} WHERE EXTRACT(MONTH FROM DATE(latest_created_timestamp)) = 5 AND EXTRACT(YEAR FROM DATE(latest_created_timestamp)) = 2024 AND markdown_reason = 'Algo Priced, Sellthrough Expected';"
 "Markdown reason being infeasible min price, what's the number and average discount for such plans? Filter on plans run this year and show results by week.","
 1. markdown reason
 2. plan
@@ -161,12 +161,12 @@ SELECT COUNT(DISTINCT plan_id) AS plans
 1. markdown reason is 'markdown_reason'
 2. plan is 'plan_id'
 3. timestamp is 'latest_created_timestamp'
-4. week is 'week'
+4. week is 'week_num'
 ","
 1. markdown reason is 'infeasible min price'. From markdown reason codes, the correponding markdown reason is 'INFEASIBLE_DEFAULT_MARKDOWN'
 2. timestamp is greater or equal to date 1st Jan, 2024
 ","
-WHERE markdown_reason = 'INFEASIBLE_DEFAULT_MARKDOWN' AND latest_created_timestamp >= DATE '2024-01-01'
+WHERE markdown_reason = 'INFEASIBLE_DEFAULT_MARKDOWN' AND DATE(latest_created_timestamp) >= DATE '2024-01-01'
 ","
 week
 ","
@@ -176,8 +176,8 @@ week
 1. from metrics definitions, average discount is total dollar markdown divided by total markdown  prior price for each group. From the schema, dollar markdown is 'dol_mkdn' and markdown prior price is 'current_price'
 2. number of unique plans.
 ","
-SELECT week,  SUM(dol_mkdn)/ SUM(current_price) AS avg_discount, COUNT(DISTINCT plan_id) AS plans
-","SELECT week,  SUM(dol_mkdn)/ SUM(current_price) AS avg_discount, COUNT(DISTINCT plan_id) AS plans FROM clearance_markdown_ml_dev.vm_fin_rec_pd_lat_pln_rpt WHERE markdown_reason = 'INFEASIBLE_DEFAULT_MARKDOWN' AND latest_created_timestamp >= DATE '2024-01-01' GROUP BY week;"
+SELECT week_num AS week,  SUM(dol_mkdn)/ SUM(current_price) AS avg_discount, COUNT(DISTINCT plan_id) AS plans
+","SELECT week_num AS week,  SUM(dol_mkdn)/ SUM(current_price) AS avg_discount, COUNT(DISTINCT plan_id) AS plans FROM {price_drivers_table} WHERE markdown_reason = 'INFEASIBLE_DEFAULT_MARKDOWN' AND DATE(latest_created_timestamp) >= DATE '2024-01-01' GROUP BY week;"
 "For the plans run in the 1st 10 days of May which failed to meet budget restrictions, what's the distribution by markdown range?","
 1. plan
 2. timestamp
@@ -190,7 +190,7 @@ SELECT week,  SUM(dol_mkdn)/ SUM(current_price) AS avg_discount, COUNT(DISTINCT 
 1. timestamp is between 1st May and 1st May plus 10 days, 2024
 2. plans which failed to meet budget restrictions. From markdown reason codes it corresponds to markdown reason 'BUDGET_INFEASIBLE_MIN_MARKDOWN'. From the schema, markdown reason is 'markdown_reason'
 ","
-WHERE latest_created_timestamp BETWEEN DATE '2024-05-01' AND DATE_ADD(DATE '2024-05-01, 10 DAY) AND markdown_reason = 'BUDGET_INFEASIBLE_MIN_MARKDOWN'
+WHERE DATE(latest_created_timestamp) BETWEEN DATE '2024-05-01' AND DATE_ADD(DATE '2024-05-01', INTERVAL 10 DAY) AND markdown_reason = 'BUDGET_INFEASIBLE_MIN_MARKDOWN'
 ","
 markdown range
 ","
@@ -198,5 +198,5 @@ markdown range
 ","
 1. from metrics definitions, distribution is number of rows in a group divided by the total number rows.
 ","
-SELECT discount_range AS markdown, COUNT(*)/ (SUM(COUNT(*)) OVER()) AS distribution
-","SELECT discount_range AS markdown, COUNT(*)/ (SUM(COUNT(*)) OVER()) AS distribution FROM clearance_markdown_ml_dev.vm_fin_rec_pd_lat_pln_rpt WHERE latest_created_timestamp BETWEEN DATE '2024-05-01' AND DATE_ADD(DATE '2024-05-01, 10 DAY) AND markdown_reason = 'BUDGET_INFEASIBLE_MIN_MARKDOWN' GROUP BY markdown_range;"
+SELECT discount_range AS markdown_range, COUNT(*)/ (SUM(COUNT(*)) OVER()) AS distribution
+","SELECT discount_range AS markdown_range, COUNT(*)/ (SUM(COUNT(*)) OVER()) AS distribution FROM {price_drivers_table} WHERE DATE(latest_created_timestamp) BETWEEN DATE '2024-05-01' AND DATE_ADD(DATE '2024-05-01', INTERVAL 10 DAY) AND markdown_reason = 'BUDGET_INFEASIBLE_MIN_MARKDOWN' GROUP BY markdown_range;"

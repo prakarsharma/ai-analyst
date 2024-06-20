@@ -26,14 +26,16 @@ def streamlit_message(role:str, message:str) -> Dict[str, str]:
 
 
 class few_shot:
-    def __init__(self, system_prompt:str=system_prompt, examples:List[Dict[str,str]]=examples):
+    def __init__(self, system_prompt:str=system_prompt):
         self.system_prompt = system_prompt
-        self.few_shot_examples:str = "\n\n".join([few_shot.CoT_prompt(**_) for _ in examples])
+        self.few_shot_examples = few_shot.get_few_shot_examples()
         self.system_prompt += f"""Follow the examples provided below enclosed in quadruple angular brackets and answer in the same step-by-step format:
 <<<<
 {self.few_shot_examples}
 >>>>
 """
+    def get_few_shot_examples(examples:List[Dict[str,str]]=examples) -> str:
+        return "\n\n".join([few_shot.CoT_prompt(**_) for _ in examples]).format(price_drivers_table=conf["bigquery"]["table"])
 
     def CoT_prompt(question:str, 
                    data:str, 
