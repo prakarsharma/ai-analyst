@@ -95,6 +95,9 @@ class gemini_chat_api_message:
     def append(self, role:str, message:str):
         self._messages.append(gemini_chat_api_message.template(role, message))
 
+    def pop(self):
+        self._messages.pop()
+
     @property
     def messages(self) -> List[Dict]:
         return self._messages
