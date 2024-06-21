@@ -10,5 +10,3 @@ metadata:
     reasons: resources/markdown_reason_codes.csv    
 few_shot:
     examples: resources/CoT_few_shot_examples.csv
-streamlit:
-    icon: resources/logo.jpeg

@@ -1,44 +1,22 @@
 import streamlit as st
 
-from models_api.prompt_template import few_shot, streamlit_message, gemini_chat_api_message
-from models_api.gemini_api import chat_request
-from models_api.generate import llm
-from utils.cert import load_wmt_ca_bundle
-from utils.config import conf
-from utils.utils import clean, bigquery_connect
-from utils.logging import get_logger
+from app.main import chatbot
 
 
-@st.cache_resource(show_spinner="loading certificates...")
-def certificates_loader():
-    load_wmt_ca_bundle()
-
-@st.cache_resource(show_spinner="loading LLM...")
-def llm_loader():
-    return llm(conf, few_shot().system_prompt, st.secrets.llm_gateway.api_key)
-
-@st.cache_resource(show_spinner="loading chat template...")
-def chat_template_loader():
-    return gemini_chat_api_message()
-
-@st.cache_resource(show_spinner="loading BigQuery connector...")
-def bigquery_connector_loader():
-    return bigquery_connect()
-
-@st.cache_resource(show_spinner="loading logger...")
-def logger_loader():
-    return get_logger()
+@st.cache_resource(show_spinner="loading chat...")
+def load_chat():
+    return chatbot()
 
 
 st.set_page_config(
     page_title="AI analyst",
-    page_icon="conf['streamlit']['icon']",
+    page_icon="resources/logo.jpeg",
     layout="wide",
 )
 
 st.header("Chat with an AI Markdown analyst 🤖 💬")
 if "messages" not in st.session_state.keys(): # Initialize the chat message history
-    st.session_state.messages = [streamlit_message("assistant", "Ask me a question on Markdown...")]
+    st.session_state.messages = [{"role": "assistant", "content": "Ask me a question on Markdown..."}]
 
 with st.expander("Sample questions:", expanded=True):
     st.write(
@@ -52,18 +30,11 @@ with st.expander("Sample questions:", expanded=True):
     """
     )
 
-with st.spinner("Loading chat..."):
-    certificates_loader()    
-    chatbot = llm_loader()
-    chat = chat_template_loader()
-    bq_client = bigquery_connector_loader()
-    logger = logger_loader()
+chat = load_chat()
 
 prompt:str = st.chat_input("Your question...")
 if prompt: # prompt for user input and save to chat history
-    st.session_state.messages.append(streamlit_message("user", prompt))
-    logger.info("prompt: {}", prompt)
-    chat.append("user", prompt)
+    st.session_state.messages.append({"role": "user", "content": prompt})
 
 for message in st.session_state.messages: # display the prior chat messages
     with st.chat_message(message["role"]):
@@ -73,15 +44,8 @@ if st.session_state.messages[-1]["role"] != "assistant":
     with st.chat_message("assistant"):
         with st.spinner("running query... 🏃‍➡️"):
             try:
-                response = chatbot.request(chat.messages)
-                response_text = chat_request.parse_response(response)
-                logger.info("response: {}", response_text)
-                query = clean(response_text).string
-                logger.info("SQL: {}", query)
-                result = bq_client.run(query)
-                chat.append("assistant", response)
-                st.write(result)
-                st.session_state.messages.append(streamlit_message("assistant", response)) # add response to message history
+                answer = chat.answer(prompt)
+                st.write(answer)
+                st.session_state.messages.append({"role": "assistant", "content": answer}) # add response to message history
             except (ValueError, ConnectionError) as err:
-                logger.error("{} : {}", type(err), err.args[0])
-                st.write("⚠️ uh oh! BigQuery gave an error ⛔️")
+                st.write("⚠️ uh oh! encountered an error 🚫")
