@@ -25,7 +25,10 @@ class clean:
         return string.strip().strip("\n").strip()
 
     def xml_extract_sql(string:str) -> str:
-        return re.findall("<sql>(.*?)</sql>", string)[0]
+        try:
+            return re.findall("<sql>(.*?)</sql>", string)[-1]
+        except IndexError as err:
+            raise ValueError("!SQL parsing error!")
 
 class bigquery_connect:
     def __init__(self):
@@ -38,5 +41,9 @@ class bigquery_connect:
 
     def run(self, query:str, is_sql:bool=True) -> pd.DataFrame:
         if is_sql:
-            return dataset.load(name=self.connector, query=query)
+            try:
+                result = dataset.load(name=self.connector, query=query)
+                return result
+            except Exception as err:
+                raise ConnectionError("!bigquery job failure!")
         return query

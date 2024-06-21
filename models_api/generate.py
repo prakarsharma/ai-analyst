@@ -13,8 +13,14 @@ class llm:
 
     def request(self, chat_messages:List[Dict]) -> str:
         payload:Dict = self.body.payload(chat_messages)
-        response:models.Response = request("POST", 
-                                           self.gateway_url, 
-                                           headers=self.headers, 
-                                           json=payload)
-        return chat_request.parse_response(response)
+        try:
+            response:models.Response = request("POST", 
+                                               self.gateway_url, 
+                                               headers=self.headers, 
+                                               json=payload)
+        except Exception as err:
+            raise ConnectionError("!API request failure!")
+        else:
+            return response
+                    
+                

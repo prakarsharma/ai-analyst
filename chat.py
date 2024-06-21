@@ -1,6 +1,7 @@
 import streamlit as st
 
 from models_api.prompt_template import few_shot, streamlit_message, gemini_chat_api_message
+from models_api.gemini_api import chat_request
 from models_api.generate import llm
 from utils.cert import load_wmt_ca_bundle
 from utils.config import conf
@@ -70,16 +71,17 @@ for message in st.session_state.messages: # display the prior chat messages
 
 if st.session_state.messages[-1]["role"] != "assistant":
     with st.chat_message("assistant"):
-        with st.spinner("Working..."):
-            response = chatbot.request(chat.messages)
-            logger.info("response: {}", response)
-            chat.append("assistant", response)
-            st.write("running query... 🏃‍➡️")
-            query = clean(response).string
+        with st.spinner("running query... 🏃‍➡️"):
             try:
+                response = chatbot.request(chat.messages)
+                response_text = chat_request.parse_response(response)
+                logger.info("response: {}", response_text)
+                query = clean(response_text).string
+                logger.info("SQL: {}", query)
                 result = bq_client.run(query)
-            except Exception as e:
+                chat.append("assistant", response)
+                st.write(result)
+                st.session_state.messages.append(streamlit_message("assistant", response)) # add response to message history
+            except (ValueError, ConnectionError) as err:
+                logger.error("{} : {}", type(err), err.args[0])
                 st.write("⚠️ uh oh! BigQuery gave an error ⛔️")
-                raise e
-            st.write(result)
-            st.session_state.messages.append(streamlit_message("assistant", response)) # add response to message history

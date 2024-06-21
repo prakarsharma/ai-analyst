@@ -31,4 +31,10 @@ class chat_request:
         }
 
     def parse_response(response:models.Response) -> str:
-        return response.json()["candidates"][0]["content"]["parts"][0]["text"]
+        if "error" in response:
+            raise ValueError("!bad gateway response!")
+        try:
+            return response.json()["candidates"][0]["content"]["parts"][0]["text"]
+        except (KeyError, IndexError) as err:
+            raise ValueError("!corrupt gateway response!")
+        
