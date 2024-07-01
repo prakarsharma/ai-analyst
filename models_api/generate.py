@@ -5,13 +5,13 @@ from models_api.gemini_api import chat_request
 
 
 class llm:
-    def __init__(self, config:Dict, system_prompt:str, api_key:str):
+    def __init__(self, config:Dict, api_key:str, system_prompt:str, **kwargs):
         self.name:str = config["llm"]["name"]
         self.gateway_url:str = config["llm"]["gateway_url"]
         self.headers: Dict[str, str] = {"X-Api-Key": api_key}
-        self.body = chat_request(self.name, system_prompt)
+        self.body = chat_request(self.name, system_prompt, **kwargs)
 
-    def request(self, chat_messages:List[Dict]) -> str:
+    def request(self, chat_messages:List[Dict]) -> models.Response:
         payload:Dict = self.body.payload(chat_messages)
         try:
             response:models.Response = request("POST", 

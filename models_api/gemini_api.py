@@ -1,24 +1,24 @@
 from requests import models
-from typing import List, Dict
-
-from models_api.prompt_template import gemini_chat_api_message
+from typing import List, Dict, Literal
 
 
 class chat_request:
-    def __init__(self, model_name:str, system_prompt:str):
+    def __init__(self, model_name:str, system_prompt:str, **kwargs):
         self.model_name = model_name
         self.system_prompt = system_prompt
+        self.functions = kwargs.get("functions")
+        self.allowed_function_names = kwargs.get("allowed_function_names", [])
 
-    def payload(self, chat_messages:List[Dict]) -> Dict:
+    def json(model_name:str, system_prompt:str, chat_messages:List[Dict]) -> Dict:
         return {
-            "model": "gemini-1.0-pro",
+            "model": model_name,
             "task": "generateContent",
             "model-params": {
                 "contents": chat_messages,
                 "system_instruction": {
                     "parts": [
                         {
-                            "text": self.system_prompt
+                            "text": system_prompt
                         }
                     ]
                 },
@@ -30,11 +30,33 @@ class chat_request:
             }
         }
 
-    def parse_response(response:models.Response) -> str:
+    def payload(self, chat_messages:List[Dict]) -> Dict:
+        json = chat_request.json(self.model_name, self.system_prompt, chat_messages)
+        if self.functions:
+            functions = {
+                "tools": [
+                {
+                    "function_declarations": self.functions
+                }
+            ]
+            }
+            json["model-params"].update(functions)
+        if self.allowed_function_names:
+            config = {
+                "tool_config": {
+                    "function_calling_config": {
+                        "mode": "ANY", 
+                        "allowed_function_names": self.allowed_function_names
+                    }
+                }
+            }
+            json["model-params"].update(config)
+        return json
+
+    def parse_response(response:models.Response, response_type:Literal["text","functionCall"]="text") -> str:
         if "error" in response:
             raise ValueError("!bad gateway response!")
         try:
-            return response.json()["candidates"][0]["content"]["parts"][0]["text"]
+            return response.json()["candidates"][0]["content"]["parts"][0][response_type]
         except (KeyError, IndexError) as err:
             raise ValueError("!corrupt gateway response!")
-        

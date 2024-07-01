@@ -1,4 +1,4 @@
-from typing import List, Dict, Callable
+from typing import List, Dict, Union, Literal, Callable, Optional
 
 from utils.config import conf
 from utils.utils import schema, metrics, reasons, examples
@@ -19,10 +19,6 @@ For markdown reason codes refer the dictionary provided below enclosed in triple
 >>>
 
 """
-
-
-def streamlit_message(role:str, message:str) -> Dict[str, str]:
-        return {"role": role, "content": message}
 
 
 class few_shot:
@@ -86,14 +82,17 @@ class gemini_chat_api_message:
         if user_prompt:
             self.append("user", user_prompt)
 
-    def template(role:str, message:str, formatter:Callable[[str,str],str]=few_shot.format_user_prompt) -> Dict[str, str]:
+    def template(role:str, 
+                 response:Union[str,Dict], 
+                 response_type:Literal["text","functionCall"]="text", 
+                 formatter:Optional[Callable[[str,str],str]]=lambda role, prompt: prompt) -> Dict:
         return {
             "role": role,
-            "parts": {"text": formatter(role, message)}
+            "parts": {response_type: formatter(role, response)}
         }
 
-    def append(self, role:str, message:str):
-        self._messages.append(gemini_chat_api_message.template(role, message))
+    def append(self, role:str, response:Union[str,Dict], **kwargs):
+        self._messages.append(gemini_chat_api_message.template(role, response, **kwargs))
 
     def pop(self):
         self._messages.pop()
