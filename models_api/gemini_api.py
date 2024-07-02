@@ -1,5 +1,5 @@
 from requests import models
-from typing import List, Dict, Literal
+from typing import List, Dict, Union, Literal
 
 
 class chat_request:
@@ -53,10 +53,13 @@ class chat_request:
             json["model-params"].update(config)
         return json
 
-    def parse_response(response:models.Response, response_type:Literal["text","functionCall"]="text") -> str:
-        if "error" in response:
+    def parse_response(response_object:models.Response) -> Dict:
+        if "error" in response_object.json():
             raise ValueError("!bad gateway response!")
         try:
-            return response.json()["candidates"][0]["content"]["parts"][0][response_type]
+            part:Dict[str,Union[str,Dict]] = response_object.json()["candidates"][0]["content"]["parts"][0]
+            response_type:Literal["text","functionCall"] = list(part.keys())[0]
+            response:Union[str,Dict] = list(part.values())[0]
+            return {"response_type":response_type, "response":response}
         except (KeyError, IndexError) as err:
             raise ValueError("!corrupt gateway response!")

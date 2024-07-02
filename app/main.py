@@ -1,4 +1,6 @@
 import streamlit as st
+import pandas as pd
+from typing import Union, Dict, Literal
 
 from models_api.prompt_template import gemini_chat_api_message
 from models_api.system_prompt import analyst_prompt
@@ -8,6 +10,8 @@ from models_api.generate import llm
 from utils.cert import load_wmt_ca_bundle
 from utils.config import conf
 from utils.logging import get_logger
+from utils.utils import bigquery_connect
+from app.analyst import SQL_generator
 
 
 class chatbot:
@@ -16,17 +20,26 @@ class chatbot:
         self.llm = llm(conf, st.secrets.llm_gateway.api_key, analyst_prompt, functions=[data_analysis_manifest])
         self.chat = gemini_chat_api_message()
         self.logger = get_logger()
+        self.bigquery_client = bigquery_connect()
 
-    def answer(self, prompt):
+    def answer(self, prompt:str):
         try:
             self.logger.info("prompt: {}", prompt)
             self.chat.append("user", prompt)
-            response = self.llm.request(self.chat.messages)
+            response_object = self.llm.request(self.chat.messages)
+            response = chat_request.parse_response(response_object)
             self.logger.info("response: {}", response)
-            response_part = chat_request.parse_response(response, response_type="functionCall")
-            self.chat.append("model", response_part, response_type="functionCall")
-            return response_part
+            out = self.generate_response(**response)
+            self.chat.append("model", **response)
+            return out
         except (ValueError, ConnectionError) as err:
             self.logger.error("{} : {}", type(err), err.args[0])
             self.chat.pop()
             raise err
+
+    def generate_response(self, response:Union[Dict,str], response_type:Literal["text","functionCall"]="text") -> Union[str, pd.DataFrame]:
+        if response_type == "functionCall":
+            query = SQL_generator(response).generate()
+            self.logger.info("SQL: {}", query)
+            return self.bigquery_client.run(query)
+        return response
