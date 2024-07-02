@@ -1,11 +1,7 @@
 import streamlit as st
+from streamlit import session_state as ss
 
 from app.main import chatbot
-
-
-@st.cache_resource(show_spinner="loading chat...")
-def load_chat():
-    return chatbot()
 
 
 st.set_page_config(
@@ -30,7 +26,9 @@ with st.expander("Sample questions:", expanded=True):
     """
     )
 
-chat = load_chat()
+with st.spinner("loading chat... 💬"):
+    if 'chat' not in ss:
+        ss.chat = chatbot()
 
 prompt:str = st.chat_input("Your question...")
 if prompt: # prompt for user input and save to chat history
@@ -44,7 +42,7 @@ if st.session_state.messages[-1]["role"] != "assistant":
     with st.chat_message("assistant"):
         with st.spinner("running query... 🏃‍➡️"):
             try:
-                answer = chat.answer(prompt)
+                answer = ss.chat.answer(prompt)
                 st.write(answer)
                 st.session_state.messages.append({"role": "assistant", "content": answer}) # add response to message history
             except (ValueError, ConnectionError) as err:
