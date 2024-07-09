@@ -6,7 +6,6 @@ from models_api.function_template import data_analysis_manifest
 from models_api.gemini_api import chat_request, chat_api_message
 from models_api.generate import llm
 from utils.cert import load_wmt_ca_bundle
-from utils.config import conf
 from utils.secret import load_wmt_llm_gateway_secret
 from utils.logging import get_logger
 from utils.utils import bigquery_connect
@@ -17,7 +16,7 @@ class chatbot:
     def __init__(self):
         load_wmt_ca_bundle()
         load_wmt_llm_gateway_secret()
-        self.llm = llm(conf, analyst_prompt, functions=[data_analysis_manifest])
+        self.llm = llm(analyst_prompt, functions=[data_analysis_manifest])
         self.chat = chat_api_message()
         self.logger = get_logger()
         self.bigquery_client = bigquery_connect()

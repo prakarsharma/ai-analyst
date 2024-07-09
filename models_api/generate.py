@@ -5,10 +5,12 @@ from typing import List, Dict
 
 from models_api.gemini_api import chat_request
 from utils.database import records_transaction
+from utils.config import conf
 
 
 class llm:
-    def __init__(self, config:Dict, system_prompt:str, **kwargs):
+    def __init__(self, system_prompt:str, **kwargs):
+        config:Dict = conf
         self.name:str = config["llm"]["name"]
         self.gateway_url:str = config["llm"]["gateway_url"]
         self.headers: Dict[str, str] = {"X-Api-Key": os.environ['API_KEY']}
