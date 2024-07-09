@@ -1,5 +1,5 @@
 from requests import models
-from typing import List, Dict, Union, Literal
+from typing import List, Dict, Union, Literal, Optional, Callable
 
 
 class chat_request:
@@ -58,8 +58,36 @@ class chat_request:
             raise ValueError("!bad gateway response!")
         try:
             part:Dict[str,Union[str,Dict]] = response_object.json()["candidates"][0]["content"]["parts"][0]
-            response_type:Literal["text","functionCall"] = list(part.keys())[0]
+            mode:Literal["text","functionCall"] = list(part.keys())[0]
             response:Union[str,Dict] = list(part.values())[0]
-            return {"response_type":response_type, "response":response}
+            return {"response":response, "mode":mode}
         except (KeyError, IndexError) as err:
             raise ValueError("!corrupt gateway response!")
+
+
+class chat_api_message:
+    def __init__(self, user_prompt:str=None):
+        self._messages = []
+        if user_prompt:
+            self.append("user", user_prompt)
+
+    def template(role:str, 
+                 response:Union[str,Dict], 
+                 mode:Literal["text","functionCall"]="text", 
+                 formatter:Optional[Callable[[str,str],str]]=lambda role, prompt: prompt) -> Dict:
+        return {
+            "role": role,
+            "parts": {mode: formatter(role, response)}
+        }
+
+    def append(self, role:str, response:Union[str,Dict], **kwargs):
+        self._messages.append(chat_api_message.template(role, response, **kwargs))
+
+    def pop(self):
+        if self._messages:
+            self._messages.pop()
+
+    @property
+    def messages(self) -> List[Dict]:
+        return self._messages
+

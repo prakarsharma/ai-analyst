@@ -2,10 +2,9 @@ import streamlit as st
 import pandas as pd
 from typing import Union, Dict, Literal
 
-from models_api.prompt_template import gemini_chat_api_message
 from models_api.system_prompt import analyst_prompt
 from models_api.function_template import data_analysis_manifest
-from models_api.gemini_api import chat_request
+from models_api.gemini_api import chat_request, chat_api_message
 from models_api.generate import llm
 from utils.cert import load_wmt_ca_bundle
 from utils.config import conf
@@ -18,7 +17,7 @@ class chatbot:
     def __init__(self):
         load_wmt_ca_bundle()
         self.llm = llm(conf, st.secrets.llm_gateway.api_key, analyst_prompt, functions=[data_analysis_manifest])
-        self.chat = gemini_chat_api_message()
+        self.chat = chat_api_message()
         self.logger = get_logger()
         self.bigquery_client = bigquery_connect()
 
@@ -37,8 +36,8 @@ class chatbot:
             self.chat.pop()
             raise err
 
-    def generate_response(self, response:Union[Dict,str], response_type:Literal["text","functionCall"]="text") -> Union[str, pd.DataFrame]:
-        if response_type == "functionCall":
+    def generate_response(self, response:Union[Dict,str], mode:Literal["text","functionCall"]="text") -> Union[str, pd.DataFrame]:
+        if mode == "functionCall":
             query = SQL_generator(response).generate()
             self.logger.debug("SQL | %s", query)
             return self.bigquery_client.run(query)
