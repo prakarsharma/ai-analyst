@@ -1,10 +1,8 @@
 import os
-from datetime import datetime
 from requests import request, models
 from typing import List, Dict
 
 from models_api.gemini_api import chat_request
-from utils.database import records_transaction
 from utils.config import conf
 
 
@@ -23,18 +21,7 @@ class llm:
                                                self.gateway_url, 
                                                headers=self.headers, 
                                                json=payload)
-            llm.record_usage_metadata(response)
         except Exception as err:
             raise ConnectionError("!API request failure!")
         else:
             return response
-
-    def record_usage_metadata(response:models.Response):
-        timestamp = str(datetime.now())
-        try:
-            usage_metadata = response.json()["usageMetadata"]
-        except KeyError:
-            raise ConnectionError("!API request failure!")
-        else:
-            records = [{"timestamp":f"'{timestamp}'", "token_counter":f"'{token_counter}'", "count":str(count)} for token_counter,count in usage_metadata.items()]
-            records_transaction(records)

@@ -24,10 +24,10 @@ def create_table(table_name:str="usage_metadata"):
     connection_object.commit()
     connection_object.close()
 
-def records_transaction(records:List[Dict], table_name:str="usage_metadata"):
+def records_transaction(records:List[List], table_name:str="usage_metadata"):
     connect_get_cursor()
     for record in records:
-        values = ", ".join(list(record.values()))
+        values = ", ".join(record)
         query = f"""INSERT INTO {table_name} VALUES ({values});"""
         cursor_object.execute(query)
     connection_object.commit()

@@ -1,5 +1,8 @@
+from datetime import datetime
 from requests import models
 from typing import List, Dict, Union, Literal, Optional, Callable
+
+from utils.database import records_transaction
 
 
 class chat_request:
@@ -8,6 +11,12 @@ class chat_request:
         self.system_prompt = system_prompt
         self.functions = kwargs.get("functions")
         self.allowed_function_names = kwargs.get("allowed_function_names", [])
+
+    def get_usage_metadata(response:models.Response):
+        try:
+            return response.json()["usageMetadata"]
+        except KeyError:
+            raise ConnectionError("!API request failure!")
 
     def json(model_name:str, system_prompt:str, chat_messages:List[Dict]) -> Dict:
         return {
@@ -57,6 +66,7 @@ class chat_request:
         if "error" in response_object.json():
             raise ValueError("!bad gateway response!")
         try:
+            record_usage_metadata(chat_request.get_usage_metadata(response_object))
             part:Dict[str,Union[str,Dict]] = response_object.json()["candidates"][0]["content"]["parts"][0]
             mode:Literal["text","functionCall"] = list(part.keys())[0]
             response:Union[str,Dict] = list(part.values())[0]
@@ -91,3 +101,8 @@ class chat_api_message:
     def messages(self) -> List[Dict]:
         return self._messages
 
+
+def record_usage_metadata(usage_metadata:Dict):
+    timestamp = str(datetime.now())
+    records = [[f"'{timestamp}'", f"'{token_counter}'", f"{str(count)}"] for token_counter,count in usage_metadata.items()]
+    records_transaction(records)
