@@ -1,10 +1,10 @@
 reason,Explanation
-"Algo Priced, Sellthrough Expected",Item data uncorrupted; Optimal discount solution satisfies salesthrough rate requirement and achieves the highest gate value it could. Optimizer achieved the required Sell Through Rate (STR). Also called OPTIMIZER_STR_ACHIEVED.
-"Algo Priced, Sellthrough Not Expected",Item data uncorrupted; Optimal discount solution DOES NOT satisfy salesthrough rate requirement. Optimizer could not achieve the required Sell Through Rate (STR). Also called OPTIMIZER_STR_NOT_ACHIEVED.
-OPTIMIZER_STR_NOT_ACHIEVED_STORE_INVENTORY,Item data uncorrupted; Optimal discount solution DOES NOT satisfy salesthrough rate requirement due to the remaining store inventory. Optimizer could not achieve the required Sell Through Rate (STR) due to the remaining store inventory.
-OPTIMIZER_STR_NOT_ACHIEVED_UPSTREAM_INVENTORY,Item data uncorrupted; Optimal discount solution DOES NOT satisfy salesthrough rate requirement due to the remaining upstream inventory. Optimizer could not achieve the required Sell Through Rate (STR) due to the remaining upstream inventory.
-INFEASIBLE_DEFAULT_MARKDOWN,Item data provides infeasible strategy due to no feasible markdown price within in min max bound & rounding logic applied. We applied default markdown rate in this case. Optimizer failed because of infeasible minimum markdown price.
-BUDGET_INFEASIBLE_MIN_MARKDOWN,The partition is infeasible to stay within the budget required. We applied minimum feasible markdown rate to all groups that goes into the optimizer model in the partition in this case. Optimizer exceeded the budget.
-Min Markdown Applied,"Item data corrupted due to one or more of the following corruption data: missing elasticity, zero or missing average daily sales data, zero or missing projected start gate inventory. We applied minimum feasible markdown rate in this case. Also called CORRUPTED_MIN_MARKDOWN."
-Low Price Rule,Group original price falls into the low price criteria. Apply the low price rule directly without running optimizer. Also called LOW_PRICE.
-MARKDOWN_NOT_NEEDED,Mandatory Markdown = False; Target salesthrough rate achieved without any markdown. We does not give any markdown to such items.
+"Algo Priced, Sellthrough Expected",Optimizer has found a markdown solution which satisfies the target STR requirement and achieves the highest STR it can. Optimization is successful. STR is achieved. Alias: OPTIMIZER_STR_ACHIEVED.
+"Algo Priced, Sellthrough Not Expected",Optimal markdown solution does not satisfy the target STR requirement. Optimization is unsuccessful. STR could not be achieved. Alias: OPTIMIZER_STR_NOT_ACHIEVED.
+OPTIMIZER_STR_NOT_ACHIEVED_STORE_INVENTORY,Optimal markdown solution does not satisfy the target STR requirement due to the remaining store inventory. 
+OPTIMIZER_STR_NOT_ACHIEVED_UPSTREAM_INVENTORY,Optimal markdown solution does not satisfy the target STR requirement due to the remaining upstream inventory.
+INFEASIBLE_DEFAULT_MARKDOWN,Optimization is not feasible because markdown price does not meet min and max price bounds (rounding logic applied). A default discount is applies in this case. Optimization is unsuccessful.
+BUDGET_INFEASIBLE_MIN_MARKDOWN,Optimizer exceeded the budget of a paritition. Min feasible discount is applied in this case to all the items in the partition.
+Min Markdown Applied,"Optimization is not feasible becasue of corrupted item data. There could be one or more of the following corruptions: missing elasticity, zero or missing average daily sales data, zero or missing projected start gate inventory. Min feasible discount is applied in this case. Alias: CORRUPTED_MIN_MARKDOWN."
+Low Price Rule,Optimizer is not run. Group original price falls into the low price criteria. Low price rule is applied instead. Alias: LOW_PRICE.
+MARKDOWN_NOT_NEEDED,Optimization not needed. Target STR achieved without any markdown.

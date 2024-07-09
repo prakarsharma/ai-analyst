@@ -1,10 +1,19 @@
 fullname,definition
-markdown percent,Dollar markdown as a fraction of the markdown prior price. Also called discount or just markdown.
-average markdown percent,Total dollar markdown divided by total markdown prior price. Also called avg markdown or avg discount.
-Sell Through Rate (STR),The ratio of units sold and starting inventory.
-average Sell Through Rate,The ratio of total units sold and total starting inventory.
-Recovery Rate (RR),The ratio of GMV and IRV.
-average Recovery Rate (RR),The ratio of total GMV to total IRV.
-weighted average markdown percent,Total weighted markdown percent divided by the total starting inventory. Also called wt. avg. discount or wt. avg. markdown.
-pX markdown percent,"The 'X'th percentile of markdown percent, where 'X' is a number between 0 and 100. Also called 'X'th percentile markdown or discount."
-summary statistics,"avg RR, avg STR, wt. avg. discount, p10 discount, p90 discount, number of items, number of stores, total starting inventory, total markdown spend, total GMV and total units sold"
+number of,"Distinct count of specified data (usually of categorical type). Common aliases are e.g., num of, no. of, count of, count of distinct, count unique, how many, etc. (followed by name of data)"
+average markdown percent,"Average discount from the markdown prior price. Common aliases are e.g., avg discount, % discount, discount percentage, discount pct, avg markdown, mkdn,% mkdn,  mkdn pct, etc."
+average Sell Through Rate (STR),"Total sales by total inventory. Common aliases are e.g., avg STR, str, sell through, str achieved etc."
+average Sell Through Rate (STR) without markdown,"STR if no markdown was planned. Common aliases are e.g., STR with no markdown, str 0 mkdn, sell through wo discount, str @zero discount etc."
+average Recovery Rate (RR),"Total GMV (Gross Merchandize Volume) by total IRV (Initial Retail Value). Common aliases are e.g., recovery rate, avg RR, RR, etc."
+weighted average markdown percent,"Average discount weighted with starting inventory. Common aliases are e.g., weighted average discount, weighted average percentage discount,  wt avg pct discount, wt avg discount %, wt avg markdown, wt avg mkdn %, wt avg pct mkdn, etc."
+markdown percent percentile,"The 'N'th percentile of markdown percent, where 'N' is a number between 0 and 100. Common aliases are e.g., 'N'th percentile markdown, pN mardown percent, Nth %ile mkdn, Nth %ile mkdn pct, N pctile % mkdn, Nth percentile discount, N %ile discount pct, etc."
+distribution,The distribution of observations (rows or records) by specified data.
+summary statistics,"average recovery rate, average sell through rate, weighted average markdown percent, 10th percentile markdown percent, 90th percentile markdown percent, number of prime_item, number of store_nbr, total starting inventory, total budget, total GMV and total markdown sales. Common aliases are e.g., summary stats, summary, stats, plan performance stats, plan perf, performance, perf, etc."
+total starting inventory,"Total starting inventory. Common aliases are e.g., total projected inventory at gate, total proj inv, proj inv, start inv, intital inv, inventory, inv, etc."
+total budget,"Total markdown spend. Common aliases are e.g., budget, mkdn spend, etc."
+total markdown sales,"Total sales post markdown (after gate date until gate effective date). Common aliases are e.g., total sales post mkdn, total mkdn sales, sales, units sold, sale quantity, gate sales, etc."
+total Gross Merchandize Volume (GMV),"Total dollar sales post markdown (after gate date until gate effective date). Common aliases are e.g., gmv, total gate value, gate val, total dollar sales post markdown, dollar mkdn sale, dollar sales, dol gate sale, etc."
+total starting inventory change,"Change in total starting inventory from the previous plan revision. Common aliases are e.g., starting inventory change, start inv change, etc."
+total budget change,"Change in total budget from the previous plan revision. Common aliases are e.g., budget change, etc."
+total markdown sales change,"Change in total sales post markdown from the previous plan revision. Common aliases are e.g., total sales post mkdn change, total mkdn sales change, sales change, units sold change, sale quantity change, gate sales change, etc."
+total Gross Merchandize Volume (GMV) change,"Change in total post markdown dollar sales. Common aliases are e.g., gmv change, total gate value change, gate val change, total dollar sales post markdown change, dollar mkdn sale change, dollar sales change, dol gate sale change, etc."
+select,"Output the specified data (which is already present in the price drivers dataset and does not warrant calculation). Common aliases are e.g., list, show, any, all, which, etc. (followed by name of data)"
