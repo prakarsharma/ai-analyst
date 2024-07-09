@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 from requests import request, models
 from typing import List, Dict
@@ -7,10 +8,10 @@ from utils.database import records_transaction
 
 
 class llm:
-    def __init__(self, config:Dict, api_key:str, system_prompt:str, **kwargs):
+    def __init__(self, config:Dict, system_prompt:str, **kwargs):
         self.name:str = config["llm"]["name"]
         self.gateway_url:str = config["llm"]["gateway_url"]
-        self.headers: Dict[str, str] = {"X-Api-Key": api_key}
+        self.headers: Dict[str, str] = {"X-Api-Key": os.environ['API_KEY']}
         self.body = chat_request(self.name, system_prompt, **kwargs)
 
     def request(self, chat_messages:List[Dict]) -> models.Response:

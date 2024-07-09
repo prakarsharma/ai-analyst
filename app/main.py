@@ -1,4 +1,3 @@
-import streamlit as st
 import pandas as pd
 from typing import Union, Dict, Literal
 
@@ -8,6 +7,7 @@ from models_api.gemini_api import chat_request, chat_api_message
 from models_api.generate import llm
 from utils.cert import load_wmt_ca_bundle
 from utils.config import conf
+from utils.secret import load_wmt_llm_gateway_secret
 from utils.logging import get_logger
 from utils.utils import bigquery_connect
 from app.analyst import SQL_generator
@@ -16,7 +16,8 @@ from app.analyst import SQL_generator
 class chatbot:
     def __init__(self):
         load_wmt_ca_bundle()
-        self.llm = llm(conf, st.secrets.llm_gateway.api_key, analyst_prompt, functions=[data_analysis_manifest])
+        load_wmt_llm_gateway_secret()
+        self.llm = llm(conf, analyst_prompt, functions=[data_analysis_manifest])
         self.chat = chat_api_message()
         self.logger = get_logger()
         self.bigquery_client = bigquery_connect()
