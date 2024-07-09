@@ -13,7 +13,7 @@ from app.analyst import SQL_generator
 
 
 class chatbot:
-    def __init__(self, debug_mode=False):
+    def __init__(self, debug_mode=False, safe_mode=False):
         load_wmt_ca_bundle()
         load_wmt_llm_gateway_secret()
         self.senior = llm(senior_analyst_prompt)
@@ -21,7 +21,7 @@ class chatbot:
         self.chat = chat_api_message()
         self.instructions = chat_api_message()
         self.logger = get_logger(debug_mode)
-        self.bigquery_client = bigquery_connect()
+        self.bigquery_client = bigquery_connect(safe_mode)
 
     def answer(self, prompt:str):
         try:

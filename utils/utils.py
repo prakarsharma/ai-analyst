@@ -6,7 +6,8 @@ from mlutils import dataset
 from utils.config import conf
 
 
-examples = pd.read_csv(conf["few_shot"]["examples"]).to_dict(orient="records")
+with open(conf["few_shot"]["examples"], "r") as f:
+    examples = f.read()
 
 
 def read_metadata(resource) -> str:
@@ -34,7 +35,8 @@ class clean:
             raise ValueError("!SQL parsing error!")
 
 class bigquery_connect:
-    def __init__(self):
+    def __init__(self, safe_mode:bool=False):
+        self.safe_mode = safe_mode
         self.connector:str = conf["bigquery"]["connector"]
         self.table:str = conf["bigquery"]["table"]
         # self.test()
@@ -42,8 +44,8 @@ class bigquery_connect:
     def test(self):
         dataset.load(name=self.connector, query=f"") # one-time connection setting to reduce transactional latency
 
-    def run(self, query:str, is_sql:bool=True) -> pd.DataFrame:
-        if is_sql:
+    def run(self, query:str) -> pd.DataFrame:
+        if not self.safe_mode:
             try:
                 result = dataset.load(name=self.connector, query=query)
                 return result
