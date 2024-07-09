@@ -13,14 +13,14 @@ from app.analyst import SQL_generator
 
 
 class chatbot:
-    def __init__(self):
+    def __init__(self, debug_mode=False):
         load_wmt_ca_bundle()
         load_wmt_llm_gateway_secret()
         self.senior = llm(senior_analyst_prompt)
         self.junior = llm(junior_analyst_prompt, functions=[data_analysis_manifest])
         self.chat = chat_api_message()
         self.instructions = chat_api_message()
-        self.logger = get_logger()
+        self.logger = get_logger(debug_mode)
         self.bigquery_client = bigquery_connect()
 
     def answer(self, prompt:str):
@@ -46,11 +46,12 @@ class chatbot:
         self.logger.info("prompt | %s", prompt)
         chat.append("user", prompt)
         response_object = model.request(chat.messages)
+        self.logger.debug("response object | %s", response_object.json())
         response = chat_request.parse_response(response_object)
-        self.logger.debug("response | %s", response)
+        self.logger.info("response | %s", response)
         return response
 
     def query(self, response:Dict, mode:Literal["text","functionCall"]="functionCall") -> pd.DataFrame:
         query = SQL_generator(response).generate()
-        self.logger.debug("SQL | %s", query)
+        self.logger.info("SQL | %s", query)
         return self.bigquery_client.run(query)
