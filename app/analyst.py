@@ -94,7 +94,10 @@ class SQL_generator:
         return getattr(Metrics, metric).__call__(**kwargs)
 
     def where_expression(specification:Dict[str,str]) -> str:
-        return f"{specification['data']} {operator_dictionary[specification['conditional_operator']]} {specification['values'][0]}"
+        value = specification['values'][0]
+        if not value.isnumeric():
+            value = f"""{value.strip("'")}"""
+        return f"{specification['data']} {operator_dictionary[specification['conditional_operator']]} {value}"
 
     def group_expression(specification:str) -> str:
         return specification
