@@ -23,7 +23,7 @@ Question: What's the min, max and avg discount, achieved and target str, str wo 
 Follow this set of instructions: Filter on plan_id = 3852025. Calculate min markdown percent, max markdown percent, average markdown percent, average sell through rate, average sell through rate without markdown. Group by target_str, gate_dt, latest_created_timestamp. Order by latest_created_timestamp descending, gate_dt ascending, target_str descending.
 
 Question: Plans created last week.
-Follow this set of instructions: Filter on latest_created_timestamp >= CURRENT_DATE - 1 week. Calculate number of plan_id.
+Follow this set of instructions: Filter on latest_created_timestamp >= '{date_sub_week}'. Calculate number of plan_id.
 
 Question: Number of plans in May 24 with markdown reason 'STR achieved'.
 Follow this set of instructions: Filter on month_year = 05-2024 and markdown_reason = 'Algo Priced, Sellthrough Expected'. Calculate number of plan_id.
@@ -32,7 +32,7 @@ Question: Markdown reason being infeasible min price, what's the number and aver
 Follow this set of instructions: Filter on markdown_reason = INFEASIBLE_DEFAULT_MARKDOWN' and year = 2024. Calculate number of plan_id and average markdown percent. Group by week_year. Order by week_year descending.
 
 Question: For the plans run in the 1st 10 days of May which failed to meet budget restrictions, what's the distribution by markdown range?
-Follow this set of instructions: Filter on latest_created_timestamp >= '2024-05-01' and latest_created_timestamp <= '2024-05-10' and markdown_reason = 'BUDGET_INFEASIBLE_MIN_MARKDOWN'. Calculate distribution of SIC. Group by discount_range. Order by discount_range descending.
+Follow this set of instructions: Filter on latest_created_timestamp >= '2024-05-01' and latest_created_timestamp <= '2024-05-10' and markdown_reason = 'BUDGET_INFEASIBLE_MIN_MARKDOWN'. Calculate distribution. Group by discount_range. Order by discount_range descending.
 
 Question: Plans created just 1 week before review and approved.
 Follow this set of instructions: Filter on days_before_review <= 7 and status = 'approved'. Calculate number of plan_id.
@@ -50,7 +50,7 @@ Question: For plan no. 3780643 for which items has the inventory changed?
 Follow this set of instructions: Filter on plan_id = 3780643. Calculate total inventory change. Group by prime_item. Filter grouped data on total inventory change > 0. Order by total inventory change descending.
 
 Question: plans whose budget changed in last 1 week?
-Follow this set of instructions: Filter on latest_created_timestamp >= CURRENT_DATE - 1 week. Calculate total budget change. Group by plan_id. Filter grouped data on total budget change > 0. Order by total budget change descending.
+Follow this set of instructions: Filter on latest_created_timestamp >= '{date_sub_week}'. Calculate total budget change. Group by plan_id. Filter grouped data on total budget change > 0. Order by total budget change descending.
 
 Question: Items which have not been discounted in the last 1 month.
-Follow this set of instructions: Filter on latest_created_timestamp >= CURRENT_DATE - 1 month. Calculate average markdown percent. Group by prime_item. Filter grouped data on average markdown percent > 0.
+Follow this set of instructions: Filter on latest_created_timestamp >= '{date_sub_month}'. Calculate average markdown percent. Group by prime_item. Filter grouped data on average markdown percent > 0.

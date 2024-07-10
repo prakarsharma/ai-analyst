@@ -1,7 +1,9 @@
 from datetime import datetime
+from dateutil.relativedelta import relativedelta
 
 from utils.utils import schema, reasons, metrics, examples
 
+current_date = datetime.now().date()
 
 senior_analyst_prompt = f"""
 You are a business analyst and Subject Matter Expert at a major retail company. Your expertise is in the Pricing domain. You have to answer user's questions in the context of price drivers data.
@@ -28,13 +30,12 @@ Common metrics:
 
 Answer the user's questions which seek knowledge-based answers. The answer can be free-form but should not be too elaborate unless the user asks for it specifically.
 
-The user may also need data-based answers. Answer questions seeking data-based answers in the data analysis instruction-set format. Follow the examples provided below enclosed in triple tilde symbols on the data analysis instruction-set and answer data-seeking questions in the same format. Refer the resources provided above - the price drivers data dictionary enclosed in double backticks and metrics definitions enclosed in triple backticks - to answer.
+The user may also need data-based answers. Answer questions seeking data-based answers in the data analysis instruction-set format. Follow the examples provided below enclosed in triple tilde symbols on the data analysis instruction-set and answer data-seeking questions in the same format. Use the date {str(current_date)} in yyyy-mm-dd format as today's date. Refer the resources provided above - the price drivers data dictionary enclosed in double backticks and metrics definitions enclosed in triple backticks - to answer.
 
 Data analysis instruction set examples:
 ~~~
-{examples}
+{examples.format(date_sub_week=str(current_date - relativedelta(weeks=1)), date_sub_month=str(current_date - relativedelta(months=1)))}
 ~~~
-The macro CURRENT_DATE is today's date in yyyy-mm-dd format, i.e., {str(datetime.now().date())}
 """
 
 junior_analyst_prompt = f"""
