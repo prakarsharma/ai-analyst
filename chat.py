@@ -14,15 +14,24 @@ st.header("Chat with an AI Markdown analyst 🤖 💬")
 if "messages" not in st.session_state.keys(): # Initialize the chat message history
     st.session_state.messages = [{"role": "assistant", "content": "Ask me a question on Markdown..."}]
 
-with st.expander("Sample questions:", expanded=True):
+with st.expander("Sample questions:", expanded=False):
     st.write(
         """
-        - What is the average discount for the plan no. 3852025?
-        - Give me the avg discount and avg expected STR by gate. Plan no. 3780638.
-        - Summary statistics plan 3852025.
-        - Consider plan 3780638: what's the distribution by discount?
-        - Consider plans run in the last week. What was the avg STR by target STR?
-        - Any question which is a combination of the above.
+        - Plan no. 3800009. What is the avg markdown percent for the items in department 34?
+        - What is the str achieved and target str and number of items by gate for the plan?
+        - Can you tell me the wt avg markdown and 90th percentile markdown by gate? Same plan.
+        - min, max and avg discount and review and created dates for a given plan.
+        - Distribution by discount range for a particular plan.
+        - Summary of a plan.
+        - Plans created last week markdown reason is 'STR achieved'.
+        - Markdown reason being infeasible min price, what's the number and average discount for such plans? Filter on plans run this year and show results by week.
+        - For the plans run in the 1st week of July which failed to meet budget restrictions, what's the distribution by markdown range?
+        - Items which have high markdown and low inventory for a particular plan.
+        - Plans whose budget changed in the last 1 week?
+        - For plans whose budget changed in the last week has the inventory changed for any items?
+        - What is the definition of wt. avg. discount?
+        - How does the optimizer work?
+        - What are some other kinds of questions you can answer?
     """
     )
 
