@@ -36,23 +36,32 @@ with st.expander("Sample questions:", expanded=False):
     )
 
 with st.spinner("loading chat... 💬"):
-    if 'chat' not in ss:
-        ss.chat = chatbot()
+    if 'chatbot' not in ss:
+        ss.chatbot = chatbot()
+
+def capture_feedback(feedback):
+    ss.chatbot.capture("feedback", feedback)
+    st.toast("✅feedback received!")
 
 prompt:str = st.chat_input("Your question...")
 if prompt: # prompt for user input and save to chat history
-    st.session_state.messages.append({"role": "user", "content": prompt})
+    ss.messages.append({"role": "user", "content": prompt})
 
-for message in st.session_state.messages: # display the prior chat messages
+for message in ss.messages: # display the prior chat messages
     with st.chat_message(message["role"]):
         st.write(message["content"])
 
-if st.session_state.messages[-1]["role"] != "assistant":
+if ss.messages[-1]["role"] != "assistant":
     with st.chat_message("assistant"):
         with st.spinner("running query... 🏃‍➡️"):
             try:
-                answer = ss.chat.answer(prompt)
+                answer = ss.chatbot.answer(prompt)
                 st.write(answer)
-                st.session_state.messages.append({"role": "assistant", "content": answer}) # add response to message history
+                ss.messages.append({"role": "assistant", "content": answer}) # add response to message history
             except (ValueError, ConnectionError) as err:
                 st.write("⚠️ uh oh! encountered an error 🚫")
+        _, up, down, __ = st.columns([0.01, 0.1, 0.1, 0.79])
+        with up:
+            st.button(':thumbsup:', on_click=capture_feedback, args=('Positive',), key='thumbsup')
+        with down:
+            st.button(':thumbsdown:', on_click=capture_feedback, args=('Negative',), key='thumbsdown')

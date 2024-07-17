@@ -55,3 +55,6 @@ class chatbot:
         query = SQL_generator(response).generate()
         self.logger.info("SQL | %s", query)
         return self.bigquery_client.run(query)
+
+    def capture(self, mode:str, message):
+        self.logger.info("%s | %s", mode, message)
