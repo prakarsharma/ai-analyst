@@ -11,6 +11,9 @@ class chat_request:
         self.system_prompt = system_prompt
         self.functions = kwargs.get("functions")
         self.allowed_function_names = kwargs.get("allowed_function_names", [])
+        self.maxOutputTokens = kwargs.get("maxOutputTokens", 2048)
+        self.temperature = kwargs.get("temperature", 0.2)
+        self.topP = kwargs.get("topP", 1)
 
     def get_usage_metadata(response:models.Response):
         try:
@@ -18,29 +21,29 @@ class chat_request:
         except KeyError:
             raise ConnectionError("!API request failure!")
 
-    def json(model_name:str, system_prompt:str, chat_messages:List[Dict]) -> Dict:
+    def json(self, chat_messages:List[Dict]) -> Dict:
         return {
-            "model": model_name,
+            "model": self.model_name,
             "task": "generateContent",
             "model-params": {
                 "contents": chat_messages,
                 "system_instruction": {
                     "parts": [
                         {
-                            "text": system_prompt
+                            "text": self.system_prompt
                         }
                     ]
                 },
                 "generation_config": {
-                    "maxOutputTokens": 2048,
-                    "temperature": 0.2,
-                    "topP": 1
+                    "maxOutputTokens": self.maxOutputTokens,
+                    "temperature": self.temperature,
+                    "topP": self.topP
                 },
             }
         }
 
     def payload(self, chat_messages:List[Dict]) -> Dict:
-        json = chat_request.json(self.model_name, self.system_prompt, chat_messages)
+        json = self.json(chat_messages)
         if self.functions:
             functions = {
                 "tools": [

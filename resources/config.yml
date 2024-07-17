@@ -1,6 +1,10 @@
 llm:
     name: gemini-1.0-pro
     gateway_url: https://wmtllmgateway.stage.walmart.com/wmtllmgateway/v1/google-genai
+    generation_config:
+        maxOutputTokens: 2048
+        temperature: 0
+        topP: 1
 bigquery:
     connector: gcp-mtech-dev
     table: clearance_markdown_ml_dev.vm_fin_rec_pd_pln_cmp_tb
