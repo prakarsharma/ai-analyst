@@ -1,7 +1,9 @@
 platform: vertexai
+vertexai:
+    project_id: &project wmt-mtech-assortment-ml-prod
 llm:
-    name: gemini-1.5-pro-001
-    gateway_url: https://us-central1-aiplatform.googleapis.com/v1/projects/wmt-mtech-assortment-ml-prod/locations/us-central1/publishers/google/models/gemini-1.5-pro-001:generateContent
+    name: &model gemini-1.5-pro-001
+    gateway_url: !concat ['https://us-central1-aiplatform.googleapis.com/v1/projects/',*project,'/locations/us-central1/publishers/google/models/',*model,':generateContent']
     generation_config:
         maxOutputTokens: 2048
         temperature: 0
