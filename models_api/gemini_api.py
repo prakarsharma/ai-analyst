@@ -3,11 +3,11 @@ from requests import models
 from typing import List, Dict, Union, Literal, Optional, Callable
 
 from utils.database import records_transaction
+from utils.config import conf
 
 
 class chat_request:
-    def __init__(self, model_name:str, system_prompt:str, **kwargs):
-        self.model_name = model_name
+    def __init__(self, system_prompt:str, **kwargs):
         self.system_prompt = system_prompt
         self.functions = kwargs.get("functions")
         self.allowed_function_names = kwargs.get("allowed_function_names", [])
@@ -22,37 +22,34 @@ class chat_request:
             raise ConnectionError("!API request failure!")
 
     def json(self, chat_messages:List[Dict]) -> Dict:
-        return {
-            "model": self.model_name,
-            "task": "generateContent",
-            "model-params": {
-                "contents": chat_messages,
-                "system_instruction": {
-                    "parts": [
-                        {
-                            "text": self.system_prompt
-                        }
-                    ]
-                },
-                "generation_config": {
-                    "maxOutputTokens": self.maxOutputTokens,
-                    "temperature": self.temperature,
-                    "topP": self.topP
-                },
+        model_params = {
+            "contents": chat_messages,
+            "system_instruction": {
+                "parts": [
+                    {
+                        "text": self.system_prompt
+                    }
+                ]
+            },
+            "generation_config": {
+                "maxOutputTokens": self.maxOutputTokens,
+                "temperature": self.temperature,
+                "topP": self.topP
             }
         }
+        return model_params
 
-    def payload(self, chat_messages:List[Dict]) -> Dict:
-        json = self.json(chat_messages)
+    def _payload(self, chat_messages:List[Dict], **kwargs) -> Dict:
+        model_params = self.json(chat_messages)
         if self.functions:
             functions = {
                 "tools": [
-                {
-                    "function_declarations": self.functions
-                }
-            ]
+                    {
+                        "function_declarations": self.functions
+                    }
+                ]
             }
-            json["model-params"].update(functions)
+            model_params.update(functions)
         if self.allowed_function_names:
             config = {
                 "tool_config": {
@@ -62,8 +59,19 @@ class chat_request:
                     }
                 }
             }
-            json["model-params"].update(config)
-        return json
+            model_params.update(config)
+        return model_params
+
+    def payload(self, chat_messages:List[Dict], **kwargs) -> Callable:
+        json = self._payload(chat_messages, **kwargs)
+        if conf["platform"] == "vertexai":
+            return json
+        if conf["platform"] == "element":
+            return {
+            "model": conf["llm"]["name"],
+            "task": "generateContent",
+            "model-params": json
+            }
 
     def parse_response(response_object:models.Response) -> Dict:
         if "error" in response_object.json():
