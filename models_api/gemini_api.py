@@ -123,6 +123,7 @@ class chat_api_message:
 
 
 def record_usage_metadata(usage_metadata:Dict):
+    model = conf["llm"]["name"]
     timestamp = str(datetime.now())
-    records = [[f"'{timestamp}'", f"'{token_counter}'", f"{str(count)}"] for token_counter,count in usage_metadata.items()]
-    records_transaction(records)
+    records = [[f"'{model}'", f"'{timestamp}'", f"'{token_counter}'", f"{str(count)}"] for token_counter,count in usage_metadata.items()]
+    records_transaction(records, table_name="requested_tokens")

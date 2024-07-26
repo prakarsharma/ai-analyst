@@ -9,13 +9,20 @@ schema["usage_metadata"] = [
     ["count","INT"]
 ]
 
+schema["requested_tokens"] = [
+    ["model","VARCHAR(255)","NOT NULL"], 
+    ["timestamp","VARCHAR(255)","NOT NULL"], 
+    ["token_counter","CHAR(20)"], 
+    ["count","INT"]
+]
+
 def connect_get_cursor(database:str='resources/ai-analyst.db'):
     global connection_object, cursor_object
     connection_object = connect(database)
     cursor_object = connection_object.cursor()
     return cursor_object
 
-def create_table(table_name:str="usage_metadata"):
+def create_table(table_name:str):
     connect_get_cursor()
     cursor_object.execute(f"DROP TABLE IF EXISTS {table_name};")
     schema_ = ",\n".join([" ".join(_) for _ in schema[table_name]])
@@ -24,7 +31,7 @@ def create_table(table_name:str="usage_metadata"):
     connection_object.commit()
     connection_object.close()
 
-def records_transaction(records:List[List], table_name:str="usage_metadata"):
+def records_transaction(records:List[List], table_name:str):
     connect_get_cursor()
     for record in records:
         values = ", ".join(record)
