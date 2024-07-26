@@ -27,28 +27,42 @@ class bigquery_job:
         return query
 
 
-def get_available_datasets() -> List[Dict[str,str]]:
-    datasets_list = []
-    for name, metadata in conf["bigquery"]["tables"].items():
-        with open(metadata["annotation"], "r") as f:
-            annotation = f.read()
-        details = dict(name=name, table_id=metadata["table_id"], annotation=annotation)
-        datasets_list.append(details)
-    return datasets_list
-
 bq = bigquery_job()
 
-def get_data_dictionary(name:str) -> List[Dict[str,str]]:
-    schema = conf["bigquery"]["tables"][name].get("schema")
+def get_plan_dept_sbu_mapping(plan_id:str="", dept_nbr:str="") -> List[Dict[str,str]]:
+    if plan_id:
+        query = f"""
+SELECT
+    dept_nbr,
+    sbu
+FROM
+    {conf['bigquery']['mapping']}
+WHERE
+    plan_id = {plan_id}
+"""
+    elif dept_nbr:
+        query = f"""
+SELECT DISTINCT
+    sbu
+FROM
+    {conf['bigquery']['mapping']}
+WHERE
+    dept_nbr = {dept_nbr}
+"""
+    return bq.run(query)
+
+def get_sbu_data_dictionary(sbu:str) -> List[Dict[str,str]]:
+    schema = conf["bigquery"]["tables"][sbu].get("schema")
     if schema:
         return pd.read_csv().to_dict(orient="records")
     else:
-        table_id:str = conf["bigquery"]["tables"][name]["table_id"]
+        table_id:str = conf["bigquery"]["tables"][sbu]["table_id"]
         return get_table_schema_from_BQ(table_id)
 
 def get_table_schema_from_BQ(table_id:str) -> List[Dict[str,str]]:
     project_id, dataset, table = table_id.split(".")
-    query = f"""SELECT
+    query = f"""
+SELECT
     column_name,
     data_type,
     description
@@ -59,10 +73,5 @@ WHERE
 """
     return bq.run(query)
 
-def run_bigquery_job(query:str) -> List[Dict[str,str]]:
+def fetch_data(query:str) -> List[Dict[str,str]]:
     return bq.run(query)
-
-def display_results(results:str):
-    return {
-        "<EOS>": results
-    }
