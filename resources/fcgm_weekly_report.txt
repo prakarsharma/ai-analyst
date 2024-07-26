@@ -1,0 +1,1 @@
+Optimization plans weekly report. This table contains information on all iterations of all optimization plans for FCGM business units where F stands for Food, C Consumables and GM is General Merchandize.

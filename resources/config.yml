@@ -1,6 +1,9 @@
 platform: vertexai
 vertexai:
     project_id: &project wmt-mtech-assortment-ml-prod
+element:
+    bigquery:
+        connector: gcp-mtech-dev
 llm:
     name: &model gemini-1.5-pro-001
     gateway_url: !concat ['https://us-central1-aiplatform.googleapis.com/v1/projects/',*project,'/locations/us-central1/publishers/google/models/',*model,':generateContent']
@@ -9,11 +12,12 @@ llm:
         temperature: 0
         topP: 1
 bigquery:
-    connector: gcp-mtech-dev
-    table: clearance_markdown_ml_dev.vm_fin_rec_pd_pln_cmp_tb
-metadata:
-    schema: resources/price_drivers_table.csv
-    metrics: resources/metrics.csv
-    reasons: resources/markdown_reason_codes.csv    
-few_shot:
-    examples: resources/instructions.txt
+    tables:
+        apparel_weekly_report:
+            table_id: wmt-mtech-assortment-ml-prod.clearance_md_report.apparel_cmd_wkly_kpi_table_rpt
+            annotation: resources/apparel_weekly_report.txt
+            schema: 
+        fcgm_weekly_report:
+            table_id: wmt-mtech-assortment-ml-prod.clearance_md_report.fcgm_cmd_wkly_kpi_table_rpt
+            annotation: resources/fcgm_weekly_report.txt
+            schema: 

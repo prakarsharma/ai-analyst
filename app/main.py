@@ -1,60 +1,59 @@
 import pandas as pd
 from typing import Union, Dict, Literal
 
-from models_api.system_prompt import senior_analyst_prompt, junior_analyst_prompt
-from models_api.function_template import data_analysis_manifest
-from models_api.gemini_api import chat_request, chat_api_message
+from models_api.system_prompt import system_prompt
+from models_api.function_template import (get_available_datasets, 
+                                          get_data_dictionary, 
+                                          run_bigquery_job, 
+                                          display_results)
+from models_api.gemini_api import (chat_request, 
+                                   chat_api_message)
 from models_api.generate import llm
 from utils.cert import load_wmt_ca_bundle
-from utils.secret import load_wmt_llm_gateway_secret
 from utils.logging import get_logger
-from utils.utils import bigquery_connect
-from app.analyst import SQL_generator
+from app import functions
 
 
 class chatbot:
     def __init__(self, debug_mode=False, safe_mode=False):
         load_wmt_ca_bundle()
-        load_wmt_llm_gateway_secret()
-        self.senior = llm(senior_analyst_prompt)
-        self.junior = llm(junior_analyst_prompt, functions=[data_analysis_manifest])
+        self.ba = llm(system_prompt, functions=[get_available_datasets, get_data_dictionary, run_bigquery_job, display_results])
         self.chat = chat_api_message()
-        self.instructions = chat_api_message()
         self.logger = get_logger(debug_mode)
-        self.bigquery_client = bigquery_connect(safe_mode)
 
     def answer(self, prompt:str):
         try:
-            senior_response = self.generate_response(self.chat, self.senior, prompt)
-            response = senior_response["response"]
-            junior_response = self.generate_response(self.instructions, self.junior, response)
-            mode = junior_response["mode"]
-            if mode == "functionCall":
-                response = self.query(**junior_response)
-                self.instructions.append("model", **junior_response)
-            else:
-                self.instructions.pop()
-            self.chat.append("model", **senior_response)
-            return response
+            self.logger.info("prompt | %s", prompt)
+            self.chat.append("user", prompt)
+            while True:
+                self.generate_response()
+                EOS = self.call_any_function()
+                if EOS:
+                    return EOS
         except (ValueError, ConnectionError) as err:
             self.logger.error("%s | %s", type(err).__name__, err.args[0], exc_info=True)
             self.chat.pop()
-            self.instructions.pop()
             raise err
 
-    def generate_response(self, chat:chat_api_message, model:llm, prompt:str):
-        self.logger.info("prompt | %s", prompt)
-        chat.append("user", prompt)
-        response_object = model.request(chat.messages)
+    def generate_response(self, **kwargs):
+        response_object = self.ba.request(self.chat.messages, **kwargs)
         self.logger.debug("response object | %s", response_object.json())
         response = chat_request.parse_response(response_object)
         self.logger.info("response | %s", response)
-        return response
+        self.chat.append("model", **response)
 
-    def query(self, response:Dict, mode:Literal["text","functionCall"]="functionCall") -> pd.DataFrame:
-        query = SQL_generator(response).generate()
-        self.logger.info("SQL | %s", query)
-        return self.bigquery_client.run(query)
+    def call_any_function(self):
+        response = self.chat.messages[-1]["parts"]
+        if "functionCall" in response:
+            name = response["functionCall"]["name"]
+            function_return_object = getattr(functions, name).__call__(**response["functionCall"]["args"])
+            if "<EOS>" in function_return_object:
+                return function_return_object["<EOS>"]
+            self.logger.debug("function response object | %s", function_return_object)
+            function_response = chat_request.function_response(name, function_return_object)
+            self.logger.info("function response | %s", function_response)
+            self.chat.append("function", function_response, mode="functionResponse")
+            
 
     def capture(self, mode:str, message):
         self.logger.info("%s | %s", mode, message)

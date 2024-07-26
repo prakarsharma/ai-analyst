@@ -85,6 +85,15 @@ class chat_request:
         except (KeyError, IndexError) as err:
             raise ValueError("!corrupt gateway response!")
 
+    def function_response(function_name:str, response) -> Dict:
+        return {
+                "name": function_name,
+                "response": {
+                    "name": function_name,
+                    "content": response
+                }
+            }
+
 
 class chat_api_message:
     def __init__(self, user_prompt:str=None):
@@ -92,9 +101,9 @@ class chat_api_message:
         if user_prompt:
             self.append("user", user_prompt)
 
-    def template(role:str, 
+    def template(role:Literal["user","model","function"], 
                  response:Union[str,Dict], 
-                 mode:Literal["text","functionCall"]="text", 
+                 mode:Literal["text","functionCall","functionResponse"]="text", 
                  formatter:Optional[Callable[[str,str],str]]=lambda role, prompt: prompt) -> Dict:
         return {
             "role": role,
