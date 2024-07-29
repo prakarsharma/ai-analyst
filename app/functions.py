@@ -49,7 +49,17 @@ FROM
 WHERE
     dept_nbr = {dept_nbr}
 """
-    return bq.run(query)
+    result, = bq.run(query)
+    sbu = result["sbu"].lower()
+    details = conf["bigquery"]["tables"][sbu]
+    return {
+        "details": result,
+        "sbu_database": {
+            "bigquery_table": details["table_id"],
+            "data_dictionary": get_sbu_data_dictionary(sbu)
+        }
+    }
+    
 
 def get_sbu_data_dictionary(sbu:str) -> List[Dict[str,str]]:
     schema = conf["bigquery"]["tables"][sbu].get("schema")
@@ -73,5 +83,5 @@ WHERE
 """
     return bq.run(query)
 
-def fetch_data(query:str) -> List[Dict[str,str]]:
+def fetch_data(sbu:str, query:str) -> List[Dict[str,str]]:
     return bq.run(query)

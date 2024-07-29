@@ -19,35 +19,23 @@ get_plan_dept_sbu_mapping = {
     }    
 }
 
-get_sbu_data_dictionary = {
-    "name": "get_sbu_data_dictionary",
-    "description": "Get the data dictionary for a particular SBU.",
-    "parameters": {
-        "type": "object",
-        "properties": {
-            "sbu": {
-                "type": "string",
-                "description": "SBU name"
-            },
-        },
-        "required": [
-            "sbu"
-        ],
-    }
-}
-
 fetch_data = {
     "name": "fetch_data",
     "description": "Accepts a SQL query and submits it to BigQuery to fetch data.",
     "parameters": {
         "type": "object",
         "properties": {
+            "sbu": {
+                "type": "string",
+                "description": "the SBU database from where data has to be fetched."
+            },
             "query": {
                 "type": "string",
                 "description": "a SQL query. Note that the query should be in Google SQL syntax."
             }
         },
         "required": [
+            "sbu",
             "query"
         ],
     }
