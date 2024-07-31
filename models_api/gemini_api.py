@@ -10,7 +10,6 @@ class chat_request:
     def __init__(self, system_prompt:str, **kwargs):
         self.system_prompt = system_prompt
         self.functions = kwargs.get("functions")
-        self.allowed_function_names = kwargs.get("allowed_function_names", [])
         self.maxOutputTokens = kwargs.get("maxOutputTokens", 2048)
         self.temperature = kwargs.get("temperature", 0.2)
         self.topP = kwargs.get("topP", 1)
@@ -50,12 +49,13 @@ class chat_request:
                 ]
             }
             model_params.update(functions)
-        if self.allowed_function_names:
+        allowed_function_names = kwargs.get("allowed_function_names", [])
+        if allowed_function_names:
             config = {
                 "tool_config": {
                     "function_calling_config": {
                         "mode": "ANY", 
-                        "allowed_function_names": self.allowed_function_names
+                        "allowed_function_names": allowed_function_names
                     }
                 }
             }
