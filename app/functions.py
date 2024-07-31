@@ -35,13 +35,13 @@ def get_mapping(query:str) -> List[Dict[str,str]]:
     for record in results["mapping"]:
         if "sbu" in record:
             results["sbu"] = record["sbu"]
-            results["table_id"] = conf["bigquery"]["tables"][results["sbu"].lower()]['table_id']
+            results["table_id"] = conf["bigquery"][results["sbu"].lower()]['table_id']
             results["schema"] = get_table_schema(results["table_id"])
             break
     return results
 
 @lru_cache
-def get_mapping_table(table_id:str=conf["bigquery"]["mapping"]) -> Dict:
+def get_mapping_table(table_id:str=conf["bigquery"]["mapping"]['table_id']) -> Dict:
     return {
         "table_id": table_id, 
         "schema": get_table_schema(table_id)
