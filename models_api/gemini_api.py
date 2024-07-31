@@ -36,10 +36,6 @@ class chat_request:
                 "topP": self.topP
             }
         }
-        return model_params
-
-    def _payload(self, chat_messages:List[Dict], **kwargs) -> Dict:
-        model_params = self.json(chat_messages)
         if self.functions:
             functions = {
                 "tools": [
@@ -49,6 +45,10 @@ class chat_request:
                 ]
             }
             model_params.update(functions)
+        return model_params
+
+    def _payload(self, chat_messages:List[Dict], **kwargs) -> Dict:
+        model_params = self.json(chat_messages)
         allowed_function_names = kwargs.get("allowed_function_names", [])
         if allowed_function_names:
             config = {
