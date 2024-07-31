@@ -2,7 +2,8 @@ import pandas as pd
 from typing import Union, Dict, Literal
 
 from models_api.system_prompt import system_prompt
-from models_api.function_template import (get_plan_dept_sbu_mapping, 
+from models_api.function_template import (get_mapping_table, 
+                                          get_mapping, 
                                           fetch_data)
 from models_api.gemini_api import (chat_request, 
                                    chat_api_message)
@@ -15,7 +16,8 @@ from app import functions
 class chatbot:
     def __init__(self, debug_mode=False, safe_mode=False):
         load_wmt_ca_bundle()
-        self.ba = llm(system_prompt, functions=[get_plan_dept_sbu_mapping, 
+        self.ba = llm(system_prompt, functions=[get_mapping_table, 
+                                                get_mapping, 
                                                 fetch_data])
         self.chat = chat_api_message()
         self.logger = get_logger(debug_mode)
@@ -24,6 +26,8 @@ class chatbot:
         try:
             self.logger.info("prompt | %s", prompt)
             self.chat.append("user", prompt)
+            self.generate_response(allowed_function_names=["get_mapping_table"])
+            self.call_any_function()
             while True:
                 EOS = self.generate_response()
                 if EOS:

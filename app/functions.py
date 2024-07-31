@@ -1,5 +1,6 @@
 import pandas as pd
 from typing import List, Dict
+from functools import lru_cache
 
 from utils.config import conf
 from utils.utils import (create_vertexai_bigquery_client, 
@@ -29,47 +30,24 @@ class bigquery_job:
 
 bq = bigquery_job()
 
-def get_plan_dept_sbu_mapping(plan_id:str="", dept_nbr:str="") -> List[Dict[str,str]]:
-    if plan_id:
-        query = f"""
-SELECT
-    dept_nbr,
-    sbu
-FROM
-    {conf['bigquery']['mapping']}
-WHERE
-    plan_id = {plan_id}
-"""
-    elif dept_nbr:
-        query = f"""
-SELECT DISTINCT
-    sbu
-FROM
-    {conf['bigquery']['mapping']}
-WHERE
-    dept_nbr = {dept_nbr}
-"""
-    result, = bq.run(query)
-    sbu = result["sbu"].lower()
-    details = conf["bigquery"]["tables"][sbu]
+def get_mapping(query:str) -> List[Dict[str,str]]:
+    results = {"mapping": bq.run(query)}
+    for record in results["mapping"]:
+        if "sbu" in record:
+            results["sbu"] = record["sbu"]
+            results["table_id"] = conf["bigquery"]["tables"][results["sbu"].lower()]['table_id']
+            results["schema"] = get_table_schema(results["table_id"])
+            break
+    return results
+
+@lru_cache
+def get_mapping_table(table_id:str=conf["bigquery"]["mapping"]) -> Dict:
     return {
-        "details": result,
-        "sbu_database": {
-            "bigquery_table": details["table_id"],
-            "data_dictionary": get_sbu_data_dictionary(sbu)
-        }
+        "table_id": table_id, 
+        "schema": get_table_schema(table_id)
     }
-    
 
-def get_sbu_data_dictionary(sbu:str) -> List[Dict[str,str]]:
-    schema = conf["bigquery"]["tables"][sbu].get("schema")
-    if schema:
-        return pd.read_csv().to_dict(orient="records")
-    else:
-        table_id:str = conf["bigquery"]["tables"][sbu]["table_id"]
-        return get_table_schema_from_BQ(table_id)
-
-def get_table_schema_from_BQ(table_id:str) -> List[Dict[str,str]]:
+def get_table_schema(table_id:str) -> List[Dict[str,str]]:
     project_id, dataset, table = table_id.split(".")
     query = f"""
 SELECT

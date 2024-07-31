@@ -1,33 +1,41 @@
 from utils.config import conf
 
-get_plan_dept_sbu_mapping = {
-    "name": "get_plan_dept_sbu_mapping",
-    "description": "Get the department and/ or Super Business Unit (SBU) for a plan ID or just the SBU for a department.",
+get_mapping = {
+    "name": "get_mapping",
+    "description": "Get the plan ID, department and SBU from the mapping table. Always get the SBU for any plan ID or department.",
     "parameters": {
         "type": "object",
         "properties": {
-            "plan_id": {
+            "query": {
                 "type": "string", 
-                "description": "a plan ID. Can be used to fetch either the department or SBU or both."
-            },
-            "dept_nbr": {
-                "type": "string", 
-                "description": "a department number. Can be used to fetch the SBU."
+                "description": "a SQL query to fetch details from the mapping table."
             }
         },
+        "required": [
+            "query"
+        ],
+    }
+}
+
+get_mapping_table = {
+    "name": "get_mapping_table",
+    "description": "Get the table ID and schema of the mapping table.",
+    "parameters": {
+        "type": "object",
+        "properties": {},
         "required": [],
     }    
 }
 
 fetch_data = {
     "name": "fetch_data",
-    "description": "Accepts a SQL query and submits it to BigQuery to fetch data.",
+    "description": "Fetch data from BigQuery table for a particular SBU. Only one SBU can be considered at one time.",
     "parameters": {
         "type": "object",
         "properties": {
             "sbu": {
                 "type": "string",
-                "description": "the SBU database from where data has to be fetched."
+                "description": "the SBU for which data has to be fetched."
             },
             "query": {
                 "type": "string",
