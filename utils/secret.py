@@ -1,4 +1,7 @@
 import os
+from typing import Dict
+
+from utils.config import conf
 
 
 def load_wmt_llm_gateway_secret():
@@ -12,3 +15,13 @@ def load_gcloud_oauth_token():
     auth_req = google.auth.transport.requests.Request()
     cred.refresh(auth_req) # need to refresh credentials to populate those
     os.environ['ACCESS_TOKEN'] = cred.token
+
+def authentication() -> Dict[str,str]:
+    if conf["platform"] == "vertexai":
+        load_gcloud_oauth_token()
+        access_token:str = os.environ["ACCESS_TOKEN"]
+        return {"Authorization": f"Bearer {access_token}"}
+    if conf["platform"] == "element":
+        load_wmt_llm_gateway_secret()
+        api_key:str = os.environ["API_KEY"]
+        return {"X-Api-Key": api_key}
