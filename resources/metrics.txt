@@ -1,0 +1,12 @@
+markdown (md or mkdn): Discount from the markdown prior price. Dollar markdown/ markdown prior price.
+
+Sell Through Rate (STR): Sales quantity (units)/ starting inventory (units).
+
+Gross Merchandize Volume (GMV): Sales amount (dollars).
+
+Initial Retail Value (IRV): Value of starting inventory (units) at markdown prior price.
+Recovery Rate (RR): GMV/ IRV, where GMV is sales amount (dollars) and IRV is value of starting inventory (units) at markdown prior price.
+
+weighted (wt.) markdown: Markdown weighted with starting inventory (units).
+
+markdown spend (budget): dollar markdown times the starting inventory.

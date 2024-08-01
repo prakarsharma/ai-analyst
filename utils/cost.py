@@ -28,13 +28,11 @@ pricing = {
 }
 
 def get_price(price:Literal["input","output"]):
-    model = conf["llm"]["name"]
-    rate:float = pricing[conf["llm"]["name"]]["input"]["rate"]
-    limit:int = pricing[conf["llm"]["name"]]["input"].get("limit", 0)
-    unlimited_rate:float = pricing[conf["llm"]["name"]]["input"].get("unlimited_rate", 0)
-    count = "count"
-    if limit:
-        count = f"CASE WHEN count <= {limit} THEN count ELSE count * {unlimited_rate/ rate} END"
+    model:str = conf["models"]["llm"]["name"]
+    rate:float = pricing[model]["input"]["rate"]
+    limit:int = pricing[model]["input"].get("limit", 0)
+    unlimited_rate:float = pricing[model]["input"].get("unlimited_rate", 0)
+    count = f"CASE WHEN count <= {limit} THEN count ELSE count * {unlimited_rate/ rate} END" if limit else "count"
     if price == "input":
         counter = "promptTokenCount"
     if price == "output":

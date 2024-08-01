@@ -16,7 +16,7 @@ class llm:
         payload:Dict = self.body.payload(chat_messages, **kwargs)
         try:
             response:models.Response = request("POST", 
-                                               conf["llm"]["gateway_url"], 
+                                               conf["models"]["llm"]["gateway_url"], 
                                                headers=self.headers, 
                                                json=payload)
         except Exception as err:

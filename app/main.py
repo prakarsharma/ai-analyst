@@ -32,7 +32,7 @@ class chatbot:
                 EOS = self.generate_response()
                 if EOS:
                     return EOS
-                self.call_any_function()
+                self.call_any_function(user_prompt=prompt)
         except (ValueError, ConnectionError) as err:
             self.logger.error("%s | %s", type(err).__name__, err.args[0], exc_info=True)
             self.chat.pop()
@@ -48,11 +48,11 @@ class chatbot:
             return response["response"]
 
 
-    def call_any_function(self):
+    def call_any_function(self, **kwargs):
         response = self.chat.messages[-1]["parts"]
         if "functionCall" in response:
             name = response["functionCall"]["name"]
-            function_return_object = getattr(functions, name).__call__(**response["functionCall"]["args"])
+            function_return_object = getattr(functions, name).__call__(**response["functionCall"]["args"], **kwargs)
             self.logger.debug("function response object | %s", function_return_object)
             function_response = chat_request.function_response(name, function_return_object)
             self.logger.info("function response | %s", function_response)

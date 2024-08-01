@@ -62,13 +62,13 @@ class chat_request:
             model_params.update(config)
         return model_params
 
-    def payload(self, chat_messages:List[Dict], **kwargs) -> Callable:
+    def payload(self, chat_messages:List[Dict], **kwargs) -> Dict:
         json = self._payload(chat_messages, **kwargs)
         if conf["platform"] == "vertexai":
             return json
         if conf["platform"] == "element":
             return {
-            "model": conf["llm"]["name"],
+            "model": conf["models"]["llm"]["name"],
             "task": "generateContent",
             "model-params": json
             }
@@ -123,7 +123,7 @@ class chat_api_message:
 
 
 def record_usage_metadata(usage_metadata:Dict):
-    model = conf["llm"]["name"]
+    model = conf["models"]["llm"]["name"]
     timestamp = str(datetime.now())
     records = [[f"'{model}'", f"'{timestamp}'", f"'{token_counter}'", f"{str(count)}"] for token_counter,count in usage_metadata.items()]
     records_transaction(records, table_name="requested_tokens")
