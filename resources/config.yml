@@ -19,11 +19,11 @@ bigquery:
     apparel:
         table_id: wmt-mtech-assortment-ml-prod.clearance_md_report.apparel_cmd_wkly_kpi_table_rpt
         description: !read_text 'resources/apparel_weekly_report.txt'
-        schema: 
+        schema: &schema !read_schema 'resources/weekly_report.csv'
     food: &fcgm
         table_id: wmt-mtech-assortment-ml-prod.clearance_md_report.fcgm_cmd_wkly_kpi_table_rpt
         description: !read_text 'resources/fcgm_weekly_report.txt'
-        schema: 
+        schema: *schema
     cons: *fcgm
     hardlines: *fcgm
     home: *fcgm

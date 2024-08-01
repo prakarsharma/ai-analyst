@@ -36,7 +36,9 @@ def get_mapping(query:str) -> List[Dict[str,str]]:
         if "sbu" in record:
             results["sbu"] = record["sbu"]
             results["table_id"] = conf["bigquery"][results["sbu"].lower()]['table_id']
-            results["schema"] = get_table_schema(results["table_id"])
+            results["schema"] = conf["bigquery"][results["sbu"].lower()]["schema"]
+            if not results["schema"]:
+                results["schema"] = get_table_schema(results["table_id"])
             break
     return results
 
