@@ -27,12 +27,16 @@ def create_vertexai_bigquery_client():
     from google.cloud import bigquery
     project_id = conf["vertexai"]["project_id"]
     def runner(query:str) -> List[Dict[str,str]]:
-        return bigquery.Client(project=project_id).query(clean(query).string).result().to_dataframe().to_dict(orient="records")
+        dataframe = bigquery.Client(project=project_id).query(clean(query).string).result().to_dataframe()
+        json = dataframe.astype(str).to_dict(orient="records")
+        return json        
     return runner
 
 def create_element_bigquery_connection():
     from mlutils import dataset
     connector = conf["element"]["bigquery"]["connector"]
     def runner(query:str) -> List[Dict[str,str]]:
-        return dataset.load(name=connector, query=clean(query).string).to_dict(orient="records")
+        dataframe = dataset.load(name=connector, query=clean(query).string)
+        json = dataframe.astype(str).to_dict(orient="records")
+        return json
     return runner
