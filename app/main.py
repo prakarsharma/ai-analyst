@@ -22,7 +22,7 @@ class chatbot:
         self.chat = chat_api_message()
         self.logger = get_logger(debug_mode)
 
-    def answer(self, prompt:str):
+    def answer(self, prompt:str) -> Dict[str, str]:
         try:
             self.logger.info("prompt | %s", prompt)
             self.chat.append("user", prompt)
@@ -31,7 +31,12 @@ class chatbot:
             while True:
                 EOS = self.generate_response()
                 if EOS:
-                    return EOS
+                    last_function_call = self.chat.get_message("model", "functionCall", -1).get("parts", {}).get("functionCall", {})
+                    query = last_function_call.get("args", {}).get("query", "") if last_function_call.get("name", "") == "fetch_data" else ""
+                    return {
+                        "SQL": query, 
+                        "answer": EOS
+                    }
                 self.call_any_function(user_prompt=prompt)
         except (ValueError, ConnectionError) as err:
             self.logger.error("%s | %s", type(err).__name__, err.args[0], exc_info=True)

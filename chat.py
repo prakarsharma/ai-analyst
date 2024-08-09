@@ -55,9 +55,11 @@ if ss.messages[-1]["role"] != "assistant":
     with st.chat_message("assistant"):
         with st.spinner("running query... 🏃‍➡️"):
             try:
-                answer = ss.chatbot.answer(prompt)
-                st.write(answer)
-                ss.messages.append({"role": "assistant", "content": answer}) # add response to message history
+                response = ss.chatbot.answer(prompt)
+                with st.expander("Show SQL", expanded=False):
+                    st.write(response["SQL"])
+                st.write(response["answer"])
+                ss.messages.append({"role": "assistant", "content": response["answer"]}) # add response to message history
             except (ValueError, ConnectionError) as err:
                 st.write("⚠️ uh oh! encountered an error 🚫")
         _, up, down, __ = st.columns([0.01, 0.1, 0.1, 0.79])

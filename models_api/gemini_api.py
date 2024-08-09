@@ -113,6 +113,12 @@ class chat_api_message:
     def append(self, role:str, response:Union[str,Dict], **kwargs):
         self._messages.append(chat_api_message.template(role, response, **kwargs))
 
+    def get_message(self, role:str, mode:str, i:int):
+        try:
+            return [msg for msg in self._messages if msg["role"] == role and mode in msg["parts"]][i]
+        except IndexError as err:
+            return {}
+
     def pop(self):
         if self._messages:
             self._messages.pop()
