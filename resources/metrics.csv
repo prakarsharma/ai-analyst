@@ -1,0 +1,21 @@
+﻿metric,definition
+sbu,business unit name
+department (dept) number,department number
+plan ID,Plan ID
+store-item combination (sic),concatenation of store number and item number.
+dollar markdown (dol md or doll mkdn),markdown prior price - gate markdown price.
+markdown (md or mkdn) (discount),dollar markdown/ markdown prior price (calculated as a percentage).
+avgerage (avg.) markdown (md or mkdn) (average discount),total dollar markdown/ total markdown prior price (calculated as a percentage).
+Nth percentile (N %ile or pN) markdown (md or mkdn) (percentile discount),Nth quantile of markdown.
+markdown (md or mkdn) range (or bin or bucket) (discount range),discretization of markdown into fixed width bins of width 10%. 0% and Nulls are separate buckets. Calculated if it is required to group by markdown (numeric type).
+weighted (wt.) markdown (md or mkdn) (weighted discount),markdown weighted with starting inventory.
+weighted (wt.) average (avg.) markdown (md or mkdn) (weighted average discount),"total weighted markdown/ total starting inventory. To avoid zero-division error, it is set equal to 0 when total starting inventory is 0."
+Sell Through Rate (STR),"sales (units)/ starting inventory. To avoid zero-division error, it is set equal to 0 when starting inventory is 0."
+average (avg.) Sell Through Rate (STR),"total sales (units)/ total starting inventory. To avoid zero-division error, it is set equal to 0 when total starting inventory is 0."
+Gross Merchandize Volume (GMV),sales amount (dollars).
+Initial Retail Value (IRV),value of inventory at markdown prior price.
+Recovery Rate (RR),GMV/ IRV. To avoid zero-division-error it is set equal to 0 when IRV is 0.
+summary statistics,"avg recovery rate, avg STR, wt. avg. mkdn, p10 mkdn, p90 mkdn, number of prime_item, number of store_nbr, total starting inventory, total budget, total GMV and total markdown sales"
+distribution,"e.g., distribution of budget by week:  total budget for each week/ total budget for the entire plan duration, distribution by store:  number of records for each item/ total number of records for the entire plan, item distribution by plan:  number of deduplicated items for each plan/ total number of items for the department, etc."
+change,"e.g., budget change: latest budget - previous budget, change in total inventory: latest total inventory - previous total inventory, etc."
+percentage (pct.) change,"e.g., pct. budget change: (latest budget - previous budget)/ previous budget (reported as a percentage), % change in total inventory: (latest total inventory - previous total inventory)/ previous total inventory, etc."

@@ -16,10 +16,11 @@ models:
     embedding:
         name: &embedding text-embedding-004
         gateway_url: !concat [*endpoint,*embedding,':predict']
-vector_db:
-    persist_path: "resources/"
+knowledge:
     documents:
-        metrics: !read_text "resources/metrics.txt"
+        metrics: !read_csv 'resources/metrics.csv'
+    db:
+        path: 'resources/'
 bigquery:
     mapping:
         table_id: wmt-mtech-assortment-ml-dev.clearance_markdown_ml_dev.plan_dept_sbu_mapping
