@@ -25,7 +25,10 @@ class bigquery_job:
             try:
                 return self.runner(query)
             except Exception as err:
-                raise ConnectionError("!bigquery job failure!")
+                # raise ConnectionError("!bigquery job failure!")
+                return {
+                    "error": str(err)
+                }
         return query
 
 
