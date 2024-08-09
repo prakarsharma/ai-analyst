@@ -1,4 +1,3 @@
-from utils.config import conf
 
 get_mapping = {
     "name": "get_mapping",
@@ -8,7 +7,7 @@ get_mapping = {
         "properties": {
             "query": {
                 "type": "string", 
-                "description": "a SQL query to fetch details from the mapping table."
+                "description": "a SQL query to fetch details from the mapping table. If the query does not contain all the primary key columns make sure it deduplicates records."
             }
         },
         "required": [
@@ -29,7 +28,7 @@ get_mapping_table = {
 
 fetch_data = {
     "name": "fetch_data",
-    "description": "Fetch data from BigQuery table for a particular SBU. Only one SBU can be considered at one time.",
+    "description": "Fetch data from BigQuery table and/ or find or compute the different relevant metrics. Only one SBU can be considered at one time.",
     "parameters": {
         "type": "object",
         "properties": {
@@ -39,7 +38,7 @@ fetch_data = {
             },
             "query": {
                 "type": "string",
-                "description": "a SQL query. Note that the query should be in Google SQL syntax."
+                "description": "a SQL query. Note that the query should be in Google SQL syntax. If the query does not contain all the primary key columns make sure it deduplicates records. The result should always be aggregated, with or without grouping by, unless the user's question requires only to list the records."
             }
         },
         "required": [
