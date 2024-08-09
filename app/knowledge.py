@@ -13,13 +13,13 @@ from utils.config import conf
 
 
 class embeddingModel(EmbeddingFunction):
-    def __init__(self, title:str=""):
+    def __init__(self):
         self.headers:Dict = authentication()
-        self.title = title
+        # self.title = title
 
     def __call__(self, input:Documents) -> Embeddings:
-        input_ = "".join(input)
-        payload:Dict = embedding_request.json(input_, self.title)
+        input_ = "".join(input) # input:Union[str,List[str]]
+        payload:Dict = embedding_request.json(input_)
         try:
             response:models.Response = request("POST", 
                                                conf["models"]["embedding"]["gateway_url"], 

@@ -3,12 +3,11 @@ from requests import models
 
 
 class embedding_request:
-    def json(document:str, title:str="", task:str="RETRIEVAL_DOCUMENT") -> Dict:
+    def json(document:str, task:str="SEMANTIC_SIMILARITY") -> Dict:
         return {
             "instances": [
                 {
                     "task_type": task,
-                    "title": title,
                     "content": document
                 }
             ]
