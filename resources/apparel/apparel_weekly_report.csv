@@ -2,9 +2,9 @@
 plan_id,INTEGER,Plan ID. A 7 digit integer. It refers to an optimization plan.
 store_nbr,INTEGER,Store number.
 prime_item_nbr,INTEGER,Prime item number.
-WM_YEAR_WK_NBR,INTEGER,Year-week number in yyyyww fromat.
-wm_year_wk_plan_start,DATE,Plan week start date.
-wm_year_wk_plan_end,DATE,Plan week end date.
+WM_YEAR_WK_NBR,INTEGER,Plan week. Week in which the plan was active. Year-week number in yyyyww fromat.
+wm_year_wk_plan_start,DATE,Plan-week start date.
+wm_year_wk_plan_end,DATE,Plan-week end date.
 dept_nbr,INTEGER,Department number. A double digit integer. It refers to a department.
 dept_catg_nbr,INTEGER,Department category number.
 fineline_nbr,INTEGER,Fineline number.
@@ -41,21 +41,21 @@ dept_catg_desc,STRING,Department category description.
 curr_rtl,FLOAT,Current retail price.
 ho_rtl,FLOAT,Home Office (HO) retail price.
 mkdn_prior_price,FLOAT,Markdown prior price.
-input_ho_rcmd_rtl,FLOAT,Input Home Office (HO) recommended retail price/ markdown price.
+input_ho_rcmd_rtl,FLOAT,Input Home Office (HO) recommended retail price.
 md_rtl_g1,FLOAT,gate 1 markdown price.
 md_rtl_g2,FLOAT,gate 2 markdown price.
 sales_unit_qty,NUMERIC,Sales quantity (units).
 sales_amt,NUMERIC,Sales amount (dollars).
-on_hand_qty_start,INTEGER,Starting on-hands quantity/ inventory.
-md_ho_doll,NUMERIC,Mardown dollar (= HO retail price - markdown retail price).
-md_ho_qty,NUMERIC,Markdown quantity.
-md_st_doll,NUMERIC,Markdown dollar (Store)
-md_ho_prev_rtl_amt,NUMERIC,Markdown (Home Office) previous retail price.
-on_hand_qty_end,INTEGER,Ending on-hands quantity
+on_hand_qty_start,INTEGER,Starting on-hands quantity/ inventory (units).
+md_ho_doll,NUMERIC,Mardown spend. Value of markdown inventory at markdown price.
+md_ho_qty,NUMERIC,Markdown inventory/ quantity (units).
+md_st_doll,NUMERIC,unknown.
+md_ho_prev_rtl_amt,NUMERIC,Value of markdown inventory at markdown prior price.
+on_hand_qty_end,INTEGER,Ending on-hands quantity/ inventory (units).
 plan_completed,BOOLEAN,Is plan completed.
 plan_start_wk,INTEGER,Plan start year-week.
-plan_on_hand_qty_start,INTEGER,Plan starting on-hands quantity.
-plan_on_hand_qty_end,INTEGER,Plan ending on-hands quantity.
-plan_wk_nbr,INTEGER,Plan week number.
-plan_total_sales_unit_qty,NUMERIC,Plan total sales quantity (units).
-plan_on_hand_qty_start_adj,NUMERIC,Plan starting on-hands quantity (adjusted with upstream inventory).
+plan_on_hand_qty_start,INTEGER,Plan starting on-hands quantity (units) (total for the entire plan duration).
+plan_on_hand_qty_end,INTEGER,Plan ending on-hands quantity (units) (total for the entire plan duration).
+plan_wk_nbr,INTEGER,Plan running week number (starts at 1).
+plan_total_sales_unit_qty,NUMERIC,Plan sales quantity (units) (total for the entire plan duration).
+plan_on_hand_qty_start_adj,NUMERIC,Plan starting on-hands quantity (adjusted with upstream inventory) (total for the entire plan duration).

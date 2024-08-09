@@ -1,0 +1,1 @@
+This is a mapping table. It maps a plan ID to a department number and SBU name. The table contains all approved plans. The grain of data is plan ID. Plan ID to department and SBU is many-to-one mapping while department to SBU is also many-to-one.

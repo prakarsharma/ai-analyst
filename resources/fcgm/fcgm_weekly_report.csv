@@ -1,0 +1,61 @@
+﻿fullname,type,description
+plan_id,INTEGER,Plan ID. A 7 digit integer. It refers to an optimization plan.
+store_nbr,INTEGER,Store number.
+prime_item_nbr,INTEGER,Prime item number.
+WM_YEAR_WK_NBR,INTEGER,Plan week. Week in which the plan was active. Year-week number in yyyyww fromat.
+wm_year_wk_plan_start,DATE,Plan-week start date.
+wm_year_wk_plan_end,DATE,Plan-week end date.
+dept_nbr,INTEGER,Department number. A double digit integer. It refers to a department.
+dept_catg_nbr,INTEGER,Department category number.
+fineline_nbr,INTEGER,Fineline number.
+plan_create_dt,DATE,Plan created date in yyyy-mm-dd format.
+out_of_stk_ts,TIMESTAMP,Out Of Stock timestamp in yyyy-mm-dd HH:MM:SS UTC format.
+plan_type_desc,STRING,Plan type description.
+plan_nm_desc,STRING,Plan name description.
+model_nm,STRING,Model name.
+model_id,STRING,Model ID.
+update_ts,DATE,Update date.
+exec_ts_g1,TIMESTAMP,gate 1 - plan execution timestamp.
+eff_ts_g1,TIMESTAMP,gate 1 - plan effective timestamp.
+gate_min_dt_g1,DATE,gate 1 minimum (start) date.
+gate_max_dt_g1,DATE,gate 1 maximum (end) date.
+gate_max_wk_end_g1,DATE,gate 1 maximum-date-week end date.
+rpt_end_dt_g1,DATE,gate 1 report end date.
+exec_ts_g2,TIMESTAMP,gate 2 - plan execution timestamp.
+eff_ts_g2,TIMESTAMP,gate 2 - plan effective timestamp.
+gate_min_dt_g2,DATE,gate 2 minimum (start) date.
+gate_max_dt_g2,DATE,gate 2 maximum (end) date.
+gate_max_wk_end_g2,DATE,gate 2 maximum-date-week end date.
+rpt_end_dt_g2,DATE,gate 2 report end date.
+plan_storeitem_rpt_start_dt,DATE,Plan-store-item report start date.
+plan_storeitem_rpt_end_dt,DATE,Plan-store-item report end date.
+plan_storeitem_target_end_dt,DATE,Plan-store-item target end date.
+executed_min_gate,INTEGER,Executed minimum gate.
+dsop_min_gate,INTEGER,DSOP minimum gate.
+plan_rpt_start_dt,DATE,Plan report start date.
+plan_rpt_end_dt,DATE,Plan report end date.
+plan_target_end_dt,DATE,Plan target end date.
+SBU,STRING,SBU name.
+dept_desc,STRING,Department description.
+dept_catg_desc,STRING,Department category description.
+curr_rtl,FLOAT,Current retail price.
+ho_rtl,FLOAT,Home Office (HO) retail price.
+mkdn_prior_price,FLOAT,Markdown prior price.
+input_ho_rcmd_rtl,FLOAT,Input Home Office (HO) recommended retail price.
+md_rtl_g1,FLOAT,gate 1 markdown price.
+md_rtl_g2,FLOAT,gate 2 markdown price.
+sales_unit_qty,NUMERIC,Sales quantity (units).
+sales_amt,NUMERIC,Sales amount (dollars).
+on_hand_qty_start,INTEGER,Starting on-hands quantity/ inventory (units).
+md_ho_doll,NUMERIC,Mardown spend. Value of markdown inventory at markdown price.
+md_ho_qty,NUMERIC,Markdown inventory/ quantity (units).
+md_st_doll,NUMERIC,unknown.
+md_ho_prev_rtl_amt,NUMERIC,Value of markdown inventory at markdown prior price.
+on_hand_qty_end,INTEGER,Ending on-hands quantity/ inventory (units).
+plan_completed,BOOLEAN,Is plan completed.
+plan_start_wk,INTEGER,Plan start year-week.
+plan_on_hand_qty_start,INTEGER,Plan starting on-hands quantity (units) (total for the entire plan duration).
+plan_on_hand_qty_end,INTEGER,Plan ending on-hands quantity (units) (total for the entire plan duration).
+plan_wk_nbr,INTEGER,Plan running week number (starts at 1).
+plan_total_sales_unit_qty,NUMERIC,Plan sales quantity (units) (total for the entire plan duration).
+plan_on_hand_qty_start_adj,NUMERIC,Plan starting on-hands quantity (adjusted with upstream inventory) (total for the entire plan duration).

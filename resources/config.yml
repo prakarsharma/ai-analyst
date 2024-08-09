@@ -23,16 +23,16 @@ vector_db:
 bigquery:
     mapping:
         table_id: wmt-mtech-assortment-ml-dev.clearance_markdown_ml_dev.plan_dept_sbu_mapping
-        description: !read_text 'resources/plan_dept_sbu_mapping.txt'
-        schema: 
+        description: !read_text 'resources/mapping/plan_dept_sbu_mapping.txt'
+        schema: !read_schema 'resources/mapping/mapping.csv'
     apparel:
         table_id: wmt-mtech-assortment-ml-prod.clearance_md_report.apparel_cmd_wkly_kpi_table_rpt
-        description: !read_text 'resources/apparel_weekly_report.txt'
-        schema: &schema !read_schema 'resources/weekly_report.csv'
+        description: !read_text 'resources/apparel/apparel_weekly_report.txt'
+        schema: !read_schema 'resources/apparel/apparel_weekly_report.csv'
     food: &fcgm
         table_id: wmt-mtech-assortment-ml-prod.clearance_md_report.fcgm_cmd_wkly_kpi_table_rpt
-        description: !read_text 'resources/fcgm_weekly_report.txt'
-        schema: *schema
+        description: !read_text 'resources/fcgm/fcgm_weekly_report.txt'
+        schema: !read_schema 'resources/fcgm/fcgm_weekly_report.csv'
     cons: *fcgm
     hardlines: *fcgm
     home: *fcgm
