@@ -14,30 +14,20 @@ st.header("Chat with an AI Markdown analyst 🤖 💬")
 if "messages" not in st.session_state.keys(): # Initialize the chat message history
     st.session_state.messages = [{"role": "assistant", "content": "Ask me a question on Markdown..."}]
 
-with st.expander("Sample questions:", expanded=False):
-    st.write(
-        """
-        - Plan no. 3800009. What is the avg markdown percent for the items in department 34?
-        - What is the str achieved and target str and number of items by gate for the plan?
-        - Can you tell me the wt avg markdown and 90th percentile markdown by gate? Same plan.
-        - min, max and avg discount and review and created dates for a given plan.
-        - Distribution by discount range for a particular plan.
-        - Summary of a plan.
-        - Plans created last week markdown reason is 'STR achieved'.
-        - Markdown reason being infeasible min price, what's the number and average discount for such plans? Filter on plans run this year and show results by week.
-        - For the plans run in the 1st week of July which failed to meet budget restrictions, what's the distribution by markdown range?
-        - Items which have high markdown and low inventory for a particular plan.
-        - Plans whose budget changed in the last 1 week?
-        - For plans whose budget changed in the last week has the inventory changed for any items?
-        - What is the definition of wt. avg. discount?
-        - How does the optimizer work?
-        - What are some other kinds of questions you can answer?
-    """
-    )
+with st.expander("Sample questions", expanded=False):
+    questions = """
+- Which SBU does department 34 belongs to?
+- Number of departments in consumables sbu.
+- Find average STR for a plan ID 3938522.
+- How many item-store combinations for plan id 3823508 with 0 start inventory by week?
+- What's the 90th percentile markdown for plan no. 3938522?
+- Calculate summary statistics for plan 3823508.
+"""
+    st.write(questions)
 
 with st.spinner("loading chat... 💬"):
     if 'chatbot' not in ss:
-        ss.chatbot = chatbot()
+        ss.chatbot = chatbot(debug_mode=True)
 
 def capture_feedback(feedback):
     ss.chatbot.capture("feedback", feedback)
