@@ -41,6 +41,7 @@ def get_mapping(query:str, **kwargs) -> List[Dict[str,str]]:
         if "sbu" in record:
             results["sbu"] = record["sbu"]
             metadata = conf["bigquery"][results["sbu"].lower()]
+            metadata.update(get_table_schema(**metadata))
             results.update(metadata)
             if not results["schema"]:
                 results["schema"] = get_table_schema(results["table_id"])
@@ -73,15 +74,26 @@ def find_supporting_documents(definitions:List[str], limit:int=3) -> List[str]:
     return list(set(supporting_documents))
 
 @lru_cache
-def get_mapping_table(table_id:str=conf["bigquery"]["mapping"]['table_id'], **kwargs) -> Dict:
-    return {
-        "table_id": table_id, 
-        "schema": get_table_schema(table_id)
-    }
+def get_mapping_table(**kwargs) -> Dict:
+    metadata = conf["bigquery"]["mapping"]
+    metadata.update(get_table_schema(**metadata))
+    return metadata
 
-def get_table_schema(table_id:str, **kwargs) -> List[Dict[str,str]]:
-    project_id, dataset, table = table_id.split(".")
-    query = f"""
+def get_table_schema(**kwargs) -> List[Dict[str,str]]:
+    schema = kwargs.get("schema")
+    if isinstance(schema, pd.DataFrame):
+        parse_schema = lambda row: {
+            "column_name": row["fullname"], 
+            "data_type": row["type"], 
+            "description": row["description"]
+        }
+        return {
+            "schema": [parse_schema(row) for i, row in schema.iterrows()]
+        }
+    table_id = kwargs.get("table_id")
+    if table_id:
+        project_id, dataset, table = kwargs["table_id"].split(".")
+        query = f"""
 SELECT
     column_name,
     data_type,
@@ -91,7 +103,9 @@ FROM
 WHERE
     table_name='{table}'
 """
-    return bq.run(query)
+        return {
+            "schema": bq.run(query)
+        }
 
 def fetch_data(sbu:str, query:str, **kwargs) -> List[Dict[str,str]]:
     return bq.run(query)

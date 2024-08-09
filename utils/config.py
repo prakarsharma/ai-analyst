@@ -13,11 +13,6 @@ def read_text(loader, node):
         text = f.read()
     return text
 
-def read_schema(loader, node):
-    path = loader.construct_scalar(node)
-    dataframe = pd.read_csv(path)
-    return [{"column_name":row["fullname"],"data_type":row["type"], "description":row["description"]} for i, row in dataframe.iterrows()]
-
 def read_csv(loader, node):
     path = loader.construct_scalar(node)
     dataframe = pd.read_csv(path)
@@ -26,7 +21,6 @@ def read_csv(loader, node):
 # register the tag handlers
 yaml.SafeLoader.add_constructor(tag='!concat', constructor=concat)
 yaml.SafeLoader.add_constructor(tag='!read_text', constructor=read_text)
-yaml.SafeLoader.add_constructor(tag='!read_schema', constructor=read_schema)
 yaml.SafeLoader.add_constructor(tag='!read_csv', constructor=read_csv)
 
 with open("resources/config.yml", "r") as f:
