@@ -7,6 +7,7 @@ from chromadb import (EmbeddingFunction,
                       Documents, 
                       Embeddings, 
                       Client, 
+                      PersistentClient, 
                       Collection)
 from typing import List, Dict
 
@@ -37,22 +38,31 @@ class embeddingModel(EmbeddingFunction):
 class vectorDB:
     def __init__(self, 
                  name:str, 
-                 documents:pd.Series=conf["knowledge"]["documents"]["metrics"]["metric"], 
                  distance:str="cosine"):
-        client = Client()
+        # client = Client()
+        client = PersistentClient(path=conf["knowledge"]["db"]["path"])
         self.db:Collection = client.get_or_create_collection(name=name, 
                                                              embedding_function=embeddingModel(), 
                                                              metadata={"hnsw:space": distance})
-        self.upsert([*documents], name)
 
     @property
     def n_docs(self) -> int:
         return self.db.count()
 
-    def upsert(self, documents:List[str], name:str):
-        _id = self.n_docs
+    def upsert(self, documents:List[str], metadata:str):
         for i, doc in enumerate(documents):
-            self.db.upsert(documents=[doc], ids=[str(_id+i)], metadatas=[{"repository": name}])
+            self.db.upsert(documents=[doc], ids=[f"{metadata}.{str(i)}"], metadatas=[{"metadata": metadata}])
+
+    def findall(self, documents:List[str], metadata:str) -> List[str]:
+        matches = []
+        for doc in documents:
+            search_result = self.query(doc, metadata=metadata)
+            if search_result:
+                _matches = self.match(search_result)
+                if _matches:
+                    matches += list(set(_matches) - set(matches))
+        if matches:
+            return [int(_id.lstrip(f"{metadata}.")) for _id in matches]
 
     def query(self, query_text:str, top_n:int=0, **metadata) -> Dict[str, List[List]]:
         if query_text:
@@ -65,18 +75,16 @@ class vectorDB:
                 kwargs.update({"where": metadata})
             result = self.db.query(**kwargs)
             return result
-        return query_texts
 
-    def match(self, query_result:Dict[str,List[List]], limit:int=1) -> List[str]:
-        try:
-            similarities = 1 - pd.Series(query_result["distances"][0], index=query_result["ids"][0])
-            # similarities.loc[-1] = 0 # a result equivalent to random noise
-            probabilities = pd.Series(softmax(similarities.values), index=query_result["ids"][0])
-            matches = probabilities.loc[probabilities > self.p_uniform]
-            return matches.index.tolist()[:limit]
-        except IndexError as err:
-            raise ValueError("!bad vector search response!")
+    def match(self, query_result:Dict[str,List[List]]) -> List[str]:
+        if query_result:
+            try:
+                n = len(query_result["ids"][0])
+                similarities = 1 - pd.DataFrame(query_result["distances"][0], index=query_result["ids"][0], columns=["similarity"])
+                # similarities.loc[-1] = 0 # a result equivalent to random noise
+                similarities["probability"] = softmax(similarities["similarity"].values)
+                matches = similarities.loc[similarities["probability"] > 1/n, ["similarity"]].copy()
+                return matches.index.tolist()
+            except IndexError as err:
+                raise ValueError("!bad vector search response!")
 
-    @property
-    def p_uniform(self):
-        return 1/ self.n_docs

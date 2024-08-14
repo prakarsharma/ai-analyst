@@ -20,7 +20,7 @@ knowledge:
     documents:
         metrics: !read_csv 'resources/metrics.csv'
     db:
-        path: 'resources/'
+        path: 'resources/db/vector/'
 bigquery:
     mapping:
         table_id: wmt-mtech-assortment-ml-dev.clearance_markdown_ml_dev.plan_dept_sbu_mapping
