@@ -1,8 +1,6 @@
 import os
 from typing import Dict
 
-from utils.config import conf
-
 
 def load_wmt_llm_gateway_secret():
     import streamlit as st
@@ -17,11 +15,11 @@ def load_gcloud_oauth_token():
     os.environ['ACCESS_TOKEN'] = cred.token
 
 def authentication() -> Dict[str,str]:
-    if conf["platform"] == "vertexai":
+    if os.environ["PLATFORM"] == "vertexai":
         load_gcloud_oauth_token()
         access_token:str = os.environ["ACCESS_TOKEN"]
         return {"Authorization": f"Bearer {access_token}"}
-    if conf["platform"] == "element":
+    if os.environ["PLATFORM"] == "element":
         load_wmt_llm_gateway_secret()
         api_key:str = os.environ["API_KEY"]
         return {"X-Api-Key": api_key}

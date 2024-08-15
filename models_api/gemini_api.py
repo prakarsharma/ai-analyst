@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 from requests import models
 from typing import List, Dict, Union, Literal, Optional, Callable
@@ -64,9 +65,9 @@ class chat_request:
 
     def payload(self, chat_messages:List[Dict], **kwargs) -> Dict:
         json = self._payload(chat_messages, **kwargs)
-        if conf["platform"] == "vertexai":
+        if os.environ["PLATFORM"] == "vertexai":
             return json
-        if conf["platform"] == "element":
+        if os.environ["PLATFORM"] == "element":
             return {
             "model": conf["models"]["llm"]["name"],
             "task": "generateContent",
