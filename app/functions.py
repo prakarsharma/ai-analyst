@@ -35,6 +35,14 @@ class bigquery_job:
 bq = bigquery_job()
 
 def get_mapping(query:str, **kwargs) -> List[Dict[str,str]]:
+    """
+    Fetch data from mapping table.
+
+    Returns
+    -------
+    dict
+        Records returned from a mapping table query.
+    """
     results = {"mapping": bq.run(query)}
     for record in results["mapping"]:
         if "sbu" in record:
@@ -51,6 +59,14 @@ def get_mapping(query:str, **kwargs) -> List[Dict[str,str]]:
 
 @lru_cache
 def get_mapping_table(**kwargs) -> Dict:
+    """
+    Get mapping table ID and related metadata.
+
+    Returns
+    -------
+    dict
+        Table ID, table data description, table schema and primary keys.
+    """
     metadata = conf["bigquery"]["mapping"]
     metadata.update(get_table_schema(**metadata))
     return metadata
@@ -84,4 +100,12 @@ WHERE
         }
 
 def fetch_data(sbu:str, query:str, **kwargs) -> List[Dict[str,str]]:
+    """
+    Fetch data from BigQuery table and/ or find or compute the different relevant metrics. Data for only one SBU can be considered at one time.
+    
+    Returns
+    -------
+    dict
+        Records returned from SBU data table query.
+    """
     return bq.run(query)
