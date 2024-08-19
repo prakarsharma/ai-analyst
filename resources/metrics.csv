@@ -1,21 +1,23 @@
-﻿metric,definition
-sbu,business unit name
-department (dept) number,department number
-plan ID,Plan ID
-store-item combination (sic),concatenation of store number and item number.
-dollar markdown (dol md or doll mkdn),markdown prior price - gate markdown price.
-markdown (md or mkdn) (discount),dollar markdown/ markdown prior price (calculated as a percentage).
-avgerage (avg.) markdown (md or mkdn) (average discount),total dollar markdown/ total markdown prior price (calculated as a percentage).
-Nth percentile (N %ile or pN) markdown (md or mkdn) (percentile discount),Nth quantile of markdown.
-markdown (md or mkdn) range (or bin or bucket) (discount range),discretization of markdown into fixed width bins of width 10%. 0% and Nulls are separate buckets. Calculated if it is required to group by markdown (numeric type).
-weighted (wt.) markdown (md or mkdn) (weighted discount),markdown weighted with starting inventory.
-weighted (wt.) average (avg.) markdown (md or mkdn) (weighted average discount),"total weighted markdown/ total starting inventory. To avoid zero-division error, it is set equal to 0 when total starting inventory is 0."
-Sell Through Rate (STR),"sales (units)/ starting inventory. To avoid zero-division error, it is set equal to 0 when starting inventory is 0."
-average (avg.) Sell Through Rate (STR),"total sales (units)/ total starting inventory. To avoid zero-division error, it is set equal to 0 when total starting inventory is 0."
-Gross Merchandize Volume (GMV),sales amount (dollars).
-Initial Retail Value (IRV),value of inventory at markdown prior price.
-Recovery Rate (RR),GMV/ IRV. To avoid zero-division-error it is set equal to 0 when IRV is 0.
-summary statistics,"avg recovery rate, avg STR, wt. avg. mkdn, p10 mkdn, p90 mkdn, number of prime_item, number of store_nbr, total starting inventory, total budget, total GMV and total markdown sales"
-distribution,"e.g., distribution of budget by week:  total budget for each week/ total budget for the entire plan duration, distribution by store:  number of records for each item/ total number of records for the entire plan, item distribution by plan:  number of deduplicated items for each plan/ total number of items for the department, etc."
-change,"e.g., budget change: latest budget - previous budget, change in total inventory: latest total inventory - previous total inventory, etc."
-percentage (pct.) change,"e.g., pct. budget change: (latest budget - previous budget)/ previous budget (reported as a percentage), % change in total inventory: (latest total inventory - previous total inventory)/ previous total inventory, etc."
+﻿metric,definition,syntax
+store-item combination (sic),concatenation of store number and item number,"CONCAT(column1, separator, column2, …)"
+dollar (dol or doll) markdown (md or mkdn or discount),markdown prior price - gate 1 or gate 2 markdown price, 
+markdown (md or mkdn or discount),dollar markdown * 100/ markdown prior price, 
+markdown (md or mkdn or discount) spend,dollar markdown weighted with starting inventory, 
+total dollar markdown,sum of dollar markdown, 
+average (avg.) markdown (md or mkdn or discount),total dollar markdown/ sum of markdown prior price, 
+markdown (md or mkdn or discount) range (bin or bucket),discretization of markdown into fixed width bins of width 10% and an upper limit of 100%. Negative or zero and Null each are separate bins.,CASE WHEN column is null THEN 'null' WHEN column <= 0 THEN '0' WHEN column <= 10 THEN '10%' WHEN column <= 20 THEN '20%' … WHEN column <= 100 THEN '100%' ELSE  '> 100%' END
+percentile (pctile or %ile) markdown (md or mkdn or discount),specified quantile (percentile) of markdown,"APPROX_QUANTILES(column, ...)"
+weighted (wt.) markdown (md or mkdn or discount),markdown weighted with starting inventory, 
+total weighted markdown,sum of weighted markdown, 
+weighted (wt.) average (avg.) markdown (md or mkdn or discount),total weighted markdown/ total starting inventory, 
+total starting inventory,sum of starting inventory, 
+Sell Through Rate (STR),sales quantity (units)/ starting inventory, 
+total sales quantity (units),sum of sales quantity (units), 
+average (avg.) Sell Through Rate (STR),total sales quantity (units)/ total starting inventory, 
+Gross Merchandize Volume (GMV),sales amount (dollars), 
+total Gross Merchandize Volume (GMV),sum of GMV, 
+Initial Retail Value (IRV),value of inventory at markdown prior price, 
+total Initial Retail Value (IRV),sum of IRV, 
+Recovery Rate (RR),GMV/ IRV, 
+average (avg.) Recovery Rate (RR),total GMV/ total IRV, 
+summary statistics,"avg recovery rate, avg STR, wt avg mkdn, 10th pctile mkdn, 90th pctile mkdn, total starting inventory, total GMV and number of store-item combinations",  

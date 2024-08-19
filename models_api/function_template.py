@@ -9,7 +9,7 @@ tools = [
             "properties": {
                 "table_id": {
                     "type": "string", 
-                    "description": "table ID of the mapping table"
+                    "description": "table ID of the mapping table. You can get it using 'get_mapping_table' function."
                 },
                 "query": {
                     "type": "string", 
@@ -41,15 +41,15 @@ tools = [
             "properties": {
                 "sbu": {
                     "type": "string",
-                    "description": "the SBU for which data has to be fetched"
+                    "description": "name of the SBU for which data has to be fetched. You can get it from the mapping table using 'get_mapping' function."
                 },
                 "table_id": {
                     "type": "string", 
-                    "description": "table ID of the SBU data table"
+                    "description": "table ID of the SBU data table. You can get it using 'get_sbu_table' function."
                 },
                 "query": {
                     "type": "string",
-                    "description": "a SQL query. Note that the query should be in Google SQL syntax. If the query does not contain all the primary key columns make sure it deduplicates records. The result should always be aggregated, with or without grouping by, unless the user's question requires only to list the records."
+                    "description": """a SQL query. Note that the query should be in Google SQL syntax. If the query does not contain all the primary key columns make sure it deduplicates records. The result should always be aggregated and may or may not be grouped by appropriate column(s). Do not group by numeric columns. Avoid zero-division error in calculation. Sort results by suitable columns and use appropriate aliases where applicable."""
                 }
             },
             "required": [
@@ -68,7 +68,7 @@ tools = [
             "properties": {
                 "sbu": {
                     "type": "string", 
-                    "description": "name of SBU for which data has to be fetched"
+                    "description": "name of the SBU for which data has to be fetched. You can get it from the mapping table using 'get_mapping' function."
                 }
             }, 
             "required": [
