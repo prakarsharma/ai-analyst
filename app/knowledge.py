@@ -83,8 +83,31 @@ class vectorDB:
                 similarities = 1 - pd.DataFrame(query_result["distances"][0], index=query_result["ids"][0], columns=["similarity"])
                 # similarities.loc[-1] = 0 # a result equivalent to random noise
                 similarities["probability"] = softmax(similarities["similarity"].values)
-                matches = similarities.loc[similarities["probability"] > 1/n, ["similarity"]].copy()
+                probable = similarities.loc[similarities["probability"] > 1/n, ["similarity"]].copy()
+                matches = vectorDB.group_match(probable)
                 return matches.index.tolist()
             except IndexError as err:
                 raise ValueError("!bad vector search response!")
 
+    def group_match(similarities:pd.DataFrame) -> pd.DataFrame:
+        mean = similarities["similarity"].mean()
+        similarities["rank"] = similarities["similarity"].rank(method="first", ascending=False)
+        similarities["reverse_rank"] = (len(similarities) - similarities["rank"]).replace(0, pd.NA)
+        similarities["within_sum"] = similarities["similarity"].cumsum()
+        similarities["within_mean"] = similarities["within_sum"]/ similarities["rank"]
+        similarities["without_sum"] = similarities["similarity"].sum() - similarities["within_sum"]
+        similarities["without_mean"] = similarities["without_sum"]/ similarities["reverse_rank"]
+        exp_var_in_grp = similarities["rank"] * (similarities["within_mean"] - mean).pow(2)
+        exp_var_out_grp = similarities["reverse_rank"] * (similarities["without_mean"] - mean).pow(2)
+        similarities["explained_variance"] = exp_var_in_grp + exp_var_out_grp
+        cal_unexp_var_in_grp = lambda group: (similarities.loc[similarities["rank"] <= group["rank"], "similarity"] - group["within_mean"]).pow(2).sum()
+        cal_unexp_var_out_grp = lambda group: (similarities.loc[similarities["rank"] > group["rank"], "similarity"] - group["without_mean"]).pow(2).sum()
+        unexp_var_in_grp = similarities.apply(cal_unexp_var_in_grp, axis=1)
+        unexp_var_out_grp = similarities.apply(cal_unexp_var_out_grp, axis=1)
+        similarities["unexplained_variance"] = (unexp_var_in_grp + unexp_var_out_grp)/ (len(similarities) - 2)
+        similarities["F"] = similarities["explained_variance"]/ similarities["unexplained_variance"]
+        # similarities["t"] = similarities["F"].pow(2)
+        highest_F = similarities["F"].max()
+        lowest_rank = similarities.loc[similarities["F"] == similarities["F"].max(), "rank"].iloc[0]
+        matches = similarities.loc[similarities["rank"] <= lowest_rank, ["similarity"]].copy()
+        return matches
