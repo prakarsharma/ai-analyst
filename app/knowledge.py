@@ -9,7 +9,7 @@ from chromadb import (EmbeddingFunction,
                       Client, 
                       PersistentClient, 
                       Collection)
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 from models_api.embedding_api import embedding_request
 from models_api.generate import authentication
@@ -17,13 +17,14 @@ from utils.config import conf
 
 
 class embeddingModel(EmbeddingFunction):
-    def __init__(self):
+    def __init__(self, task:str):
         self.headers:Dict = authentication()
+        self.task = task
         # self.title = title
 
     def __call__(self, input:Documents) -> Embeddings:
         input_ = "".join(input) # input:Union[str,List[str]]
-        payload:Dict = embedding_request.json(input_)
+        payload:Dict = embedding_request.json(input_, self.task)
         try:
             response:models.Response = request("POST", 
                                                conf["models"]["embedding"]["gateway_url"], 
@@ -38,11 +39,12 @@ class embeddingModel(EmbeddingFunction):
 class vectorDB:
     def __init__(self, 
                  name:str, 
+                 embedding_function:embeddingModel, 
                  distance:str="cosine"):
         # client = Client()
         client = PersistentClient(path=conf["knowledge"]["db"]["path"])
         self.db:Collection = client.get_or_create_collection(name=name, 
-                                                             embedding_function=embeddingModel(), 
+                                                             embedding_function=embedding_function, 
                                                              metadata={"hnsw:space": distance})
 
     @property
@@ -58,38 +60,50 @@ class vectorDB:
         for doc in documents:
             search_result = self.query(doc, metadata=metadata)
             if search_result:
-                _matches = self.match(search_result)
+                _matches = self.match(search_result)["index"]
                 if _matches:
                     matches += list(set(_matches) - set(matches))
         if matches:
             return [int(_id.lstrip(f"{metadata}.")) for _id in matches]
 
-    def query(self, query_text:str, top_n:int=0, **metadata) -> Dict[str, List[List]]:
+    def query(self, 
+              query_text:str="", 
+              top_n:int=0, 
+              embedding_function:Optional[embeddingModel]=None, 
+              return_document:bool=False, 
+              **metadata) -> Dict[str, List[List]]:
         if query_text:
             kwargs = {
                 "query_texts": query_text, 
                 "n_results": top_n or self.n_docs, 
-                "include": ["embeddings", "distances", "documents"]
+                "include": ["distances"]
             }
+            if embedding_function:
+                kwargs.update({"query_embeddings": embedding_function(query_text)})
+                kwargs.pop("query_texts")
+            if return_document:
+                kwargs["include"].append("documents")
             if metadata:
                 kwargs.update({"where": metadata})
             result = self.db.query(**kwargs)
             return result
 
-    def match(self, query_result:Dict[str,List[List]]) -> List[str]:
+    def match(self, query_result:Dict[str,List[List]], return_matching:bool=True) -> Dict[str,List[str]]:
         if query_result:
             try:
                 n = len(query_result["ids"][0])
                 similarities = 1 - pd.DataFrame(query_result["distances"][0], index=query_result["ids"][0], columns=["similarity"])
                 # similarities.loc[-1] = 0 # a result equivalent to random noise
                 similarities["probability"] = softmax(similarities["similarity"].values)
-                probable = similarities.loc[similarities["probability"] > 1/n, ["similarity"]].copy()
-                matches = vectorDB.group_match(probable)
-                return matches.index.tolist()
+                probable = similarities.loc[similarities["probability"] > 1/n, :].copy()
+                matches = vectorDB.group_match(probable.reset_index())
+                if return_matching:
+                    matches = matches[matches.matching]
+                return matches.to_dict(orient="list")
             except IndexError as err:
                 raise ValueError("!bad vector search response!")
 
-    def group_match(similarities:pd.DataFrame) -> pd.DataFrame:
+    def group_match(similarities:pd.DataFrame, match_table:bool=False) -> pd.DataFrame:
         mean = similarities["similarity"].mean()
         similarities["rank"] = similarities["similarity"].rank(method="first", ascending=False)
         similarities["reverse_rank"] = (len(similarities) - similarities["rank"]).replace(0, pd.NA)
@@ -108,6 +122,6 @@ class vectorDB:
         similarities["F"] = similarities["explained_variance"]/ similarities["unexplained_variance"]
         # similarities["t"] = similarities["F"].pow(2)
         highest_F = similarities["F"].max()
-        lowest_rank = similarities.loc[similarities["F"] == similarities["F"].max(), "rank"].iloc[0]
-        matches = similarities.loc[similarities["rank"] <= lowest_rank, ["similarity"]].copy()
-        return matches
+        lowest_rank = similarities.loc[similarities["F"] == highest_F, "rank"].tolist()[0]
+        similarities["matching"] = similarities["rank"] <= lowest_rank
+        return similarities

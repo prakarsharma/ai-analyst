@@ -1,9 +1,14 @@
-from typing import Dict
+from typing import Dict, Literal
 from requests import models
 
 
 class embedding_request:
-    def json(document:str, task:str="SEMANTIC_SIMILARITY") -> Dict:
+    def json(document:str, 
+             task:Literal["SEMANTIC_SIMILARITY", 
+                          "RETRIEVAL_QUERY", 
+                          "RETRIEVAL_DOCUMENT", 
+                          "CLUSTERING", 
+                          "QUESTION_ANSWERING"]) -> Dict:
         return {
             "instances": [
                 {

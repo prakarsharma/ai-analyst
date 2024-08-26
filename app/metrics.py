@@ -1,12 +1,12 @@
 import pandas as pd
 from typing import List, Dict
 
-from app.knowledge import vectorDB
+from app.knowledge import embeddingModel, vectorDB
 from utils.config import conf
 
 
 documents = conf["knowledge"]["documents"]["metrics"]
-metrics_db = vectorDB(name="metrics")
+metrics_db = vectorDB(name="metrics", embedding_function=embeddingModel(task="SEMANTIC_SIMILARITY"))
 metrics_db.upsert(documents["metric"].tolist(), "metric")
 
 def find_relevant_metrics(prompt:str, **kwargs) -> Dict[str, List[str]]:
