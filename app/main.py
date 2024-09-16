@@ -8,6 +8,7 @@ from models_api.gemini_api import (chat_request,
 from models_api.generate import llm
 from utils.cert import load_wmt_ca_bundle
 from utils.logging import get_logger
+from app.metrics import find_relevant_metrics
 from app import functions
 
 
@@ -21,8 +22,10 @@ class chatbot:
     def answer(self, prompt:str) -> Dict[str, str]:
         try:
             self.logger.info("prompt | %s", prompt)
-            self.chat.append("user", prompt)
-            self.generate_response(allowed_function_names=["get_mapping_table"])
+            relevant_metrics = find_relevant_metrics(prompt)
+            self.logger.info("relevant metrics | %s", relevant_metrics)
+            self.chat.append("user", prompt, formatter=lambda role, user_prompt: f"{user_prompt}\n\n{relevant_metrics}")
+            self.generate_response(allowed_function_names=["get_markdown_table"])
             self.call_any_function()
             while True:
                 EOS = self.generate_response()
@@ -33,7 +36,7 @@ class chatbot:
                         "SQL": query, 
                         "answer": EOS
                     }
-                self.call_any_function(user_prompt=prompt)
+                self.call_any_function()
         except (ValueError, ConnectionError) as err:
             self.logger.error("%s | %s", type(err).__name__, err.args[0], exc_info=True)
             self.chat.pop()
