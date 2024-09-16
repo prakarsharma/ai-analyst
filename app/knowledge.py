@@ -1,127 +1,127 @@
-import pandas as pd
-from scipy.special import softmax
-from sklearn.metrics.pairwise import cosine_similarity
-from requests import (request, 
-                      models)
-from chromadb import (EmbeddingFunction, 
-                      Documents, 
-                      Embeddings, 
-                      Client, 
-                      PersistentClient, 
-                      Collection)
+import os
+import shutil
+import numpy as np
+from rdflib import Graph
 from typing import List, Dict, Optional
 
-from models_api.embedding_api import embedding_request
-from models_api.generate import authentication
+from models_api.vectorize import vectorDB
 from utils.config import conf
 
+examples_graph = Graph().parse(conf["knowledge"]["documents"]["examples"])
 
-class embeddingModel(EmbeddingFunction):
-    def __init__(self, task:str):
-        self.headers:Dict = authentication()
-        self.task = task
-        # self.title = title
+def graph_to_DB():
+    shutil.rmtree(conf["knowledge"]["db"]["path"])
+    os.makedirs(conf["knowledge"]["db"]["path"])
+    examples_db = vectorDB(name="examples")
+    upsert_child_nodes(examples_db)
+    upsert_parent_nodes(examples_db)
+    return f"upserted {examples_db.n_docs} documents"
 
-    def __call__(self, input:Documents) -> Embeddings:
-        input_ = "".join(input) # input:Union[str,List[str]]
-        payload:Dict = embedding_request.json(input_, self.task)
-        try:
-            response:models.Response = request("POST", 
-                                               conf["models"]["embedding"]["gateway_url"], 
-                                               headers=self.headers, 
-                                               json=payload)
-        except Exception as err:
-            raise ConnectionError("!API request failure!")
-        else:
-            return embedding_request.parse_response(response)
+def upsert_child_nodes(examples_db):
+    documents_dump = """
+    PREFIX : <file:///examples/>
+    SELECT ?node ?query_string WHERE {
+        ?node :query_string ?query_string
+    }
+    """
+    documents = {}
+    for node in examples_graph.query(documents_dump):
+        items = node.asdict()
+        id_ = items.get("node").removeprefix("file:///examples/")
+        qry_str = items.get("query_string").value
+        if id_ not in documents:
+            documents[id_] = []
+        documents[id_].append(qry_str)
+    for id_, docs in documents.items():
+        examples_db.upsert(docs, metadata=id_)
 
+def upsert_parent_nodes(examples_db):
+    document_parts = """
+    PREFIX : <file:///examples/>
+    SELECT ?node ?part ?document WHERE {
+        ?node :part+/:query_string ?document .
+        ?part :query_string ?document
+    }
+    """
+    _id_ = ""
+    examples = {_id_: {"": {}}}
+    for node in examples_graph.query(document_parts):
+        items = node.asdict()
+        id_ = items.get("node").removeprefix("file:///examples/")
+        part = items.get("part").removeprefix("file:///examples/")
+        doc = items.get("document").value
+        if id_ != _id_:
+            examples[_id_].pop("")
+            _id_ = id_
+            _part_ = ""
+            examples[_id_] = {_part_: {"": 0}}
+        if part != _part_:
+            _part = _part_
+            _part_ = part
+            examples[_id_][_part_] = {}
+            embdngs = examples_db.get(metadata=_part_)
+            embdngs = {_doc_:_embdng_ for _doc_, _embdng_ in zip(embdngs["documents"], embdngs["embeddings"])}
+        embdng = embdngs[doc]
+        for _doc, _embdng in examples[_id_][_part].items():
+            examples[_id_][_part_].update({f"{_doc} {doc}": np.array(_embdng) + np.array(embdng)})
+    examples.pop("")
+    for id_, items in examples.items():
+        docs = list(list(items.values())[-1].keys())
+        embdngs = [embdng.tolist() for embdng in list(list(items.values())[-1].values())]
+        examples_db.upsert(docs, embdngs, metadata=id_)
 
-class vectorDB:
-    def __init__(self, 
-                 name:str, 
-                 embedding_function:embeddingModel, 
-                 distance:str="cosine"):
-        # client = Client()
-        client = PersistentClient(path=conf["knowledge"]["db"]["path"])
-        self.db:Collection = client.get_or_create_collection(name=name, 
-                                                             embedding_function=embedding_function, 
-                                                             metadata={"hnsw:space": distance})
-
-    @property
-    def n_docs(self) -> int:
-        return self.db.count()
-
-    def upsert(self, documents:List[str], metadata:str):
-        for i, doc in enumerate(documents):
-            self.db.upsert(documents=[doc], ids=[f"{metadata}.{str(i)}"], metadatas=[{"metadata": metadata}])
-
-    def findall(self, documents:List[str], metadata:str) -> List[str]:
-        matches = []
-        for doc in documents:
-            search_result = self.query(doc, metadata=metadata)
-            if search_result:
-                _matches = self.match(search_result)["index"]
-                if _matches:
-                    matches += list(set(_matches) - set(matches))
-        if matches:
-            return [int(_id.lstrip(f"{metadata}.")) for _id in matches]
-
-    def query(self, 
-              query_text:str="", 
-              top_n:int=0, 
-              embedding_function:Optional[embeddingModel]=None, 
-              return_document:bool=False, 
-              **metadata) -> Dict[str, List[List]]:
-        if query_text:
-            kwargs = {
-                "query_texts": query_text, 
-                "n_results": top_n or self.n_docs, 
-                "include": ["distances"]
-            }
-            if embedding_function:
-                kwargs.update({"query_embeddings": embedding_function(query_text)})
-                kwargs.pop("query_texts")
-            if return_document:
-                kwargs["include"].append("documents")
-            if metadata:
-                kwargs.update({"where": metadata})
-            result = self.db.query(**kwargs)
-            return result
-
-    def match(self, query_result:Dict[str,List[List]], return_matching:bool=True) -> Dict[str,List[str]]:
-        if query_result:
-            try:
-                n = len(query_result["ids"][0])
-                similarities = 1 - pd.DataFrame(query_result["distances"][0], index=query_result["ids"][0], columns=["similarity"])
-                # similarities.loc[-1] = 0 # a result equivalent to random noise
-                similarities["probability"] = softmax(similarities["similarity"].values)
-                probable = similarities.loc[similarities["probability"] > 1/n, :].copy()
-                matches = vectorDB.group_match(probable.reset_index())
-                if return_matching:
-                    matches = matches[matches.matching]
-                return matches.to_dict(orient="list")
-            except IndexError as err:
-                raise ValueError("!bad vector search response!")
-
-    def group_match(similarities:pd.DataFrame, match_table:bool=False) -> pd.DataFrame:
-        mean = similarities["similarity"].mean()
-        similarities["rank"] = similarities["similarity"].rank(method="first", ascending=False)
-        similarities["reverse_rank"] = (len(similarities) - similarities["rank"]).replace(0, pd.NA)
-        similarities["within_sum"] = similarities["similarity"].cumsum()
-        similarities["within_mean"] = similarities["within_sum"]/ similarities["rank"]
-        similarities["without_sum"] = similarities["similarity"].sum() - similarities["within_sum"]
-        similarities["without_mean"] = similarities["without_sum"]/ similarities["reverse_rank"]
-        exp_var_in_grp = similarities["rank"] * (similarities["within_mean"] - mean).pow(2)
-        exp_var_out_grp = similarities["reverse_rank"] * (similarities["without_mean"] - mean).pow(2)
-        similarities["explained_variance"] = exp_var_in_grp + exp_var_out_grp
-        cal_unexp_var_in_grp = lambda group: (similarities.loc[similarities["rank"] <= group["rank"], "similarity"] - group["within_mean"]).pow(2).sum()
-        cal_unexp_var_out_grp = lambda group: (similarities.loc[similarities["rank"] > group["rank"], "similarity"] - group["without_mean"]).pow(2).sum()
-        unexp_var_in_grp = similarities.apply(cal_unexp_var_in_grp, axis=1)
-        unexp_var_out_grp = similarities.apply(cal_unexp_var_out_grp, axis=1)
-        similarities["unexplained_variance"] = (unexp_var_in_grp + unexp_var_out_grp)/ (len(similarities) - 2)
-        similarities["F"] = similarities["explained_variance"]/ similarities["unexplained_variance"]
-        # similarities["t"] = similarities["F"].pow(2)
-        highest_F = similarities["F"].max()
-        lowest_rank = similarities.loc[similarities["F"] == highest_F, "rank"].tolist()[0]
-        similarities["matching"] = similarities["rank"] <= lowest_rank
-        return similarities
+def get_relevant_examples(prompt:str, examples_db:vectorDB, top_n:Optional[int]=2, **metadata) -> Dict[str, List[str]]:
+    paths = {}
+    documents = []
+    if prompt:
+        matches = examples_db.top_matches(prompt, top_n, **metadata)
+        documents = examples_db.get(ids=matches["index"])["documents"]
+        for node in matches["node"]:
+            supporting_documents = """
+            BASE <file:///examples/>
+            PREFIX : <file:///examples/>
+            SELECT ?child ?reference ?recipe WHERE """ +\
+            "{" +\
+            f"""
+            <{node}> :reference*/:name ?reference .
+            ?child :name ?reference .
+            ?child :recipe ?recipe .""" +\
+            "}"
+            for child in examples_graph.query(supporting_documents):
+                items = child.asdict()
+                node = items["child"].removeprefix("file:///examples/")
+                reference = items["reference"].value
+                recipe = items["recipe"].value
+                if node not in paths:
+                    hints = """
+                    BASE <file:///examples/>
+                    PREFIX : <file:///examples/>
+                    SELECT ?hint WHERE {
+                    OPTIONAL {""" +\
+                    f"<{node}> :hint/:recipe ?hint" +\
+                    """}
+                    }"""
+                    hints = [res.asdict().get("hint").value for res in examples_graph.query(hints)]
+                    path = {
+                        node: {
+                            reference: {
+                                "recipe": recipe
+                            }
+                        }
+                    }
+                    if hints:
+                        path[node][reference].update({"hints": hints})
+                    paths.update(path)
+    rules = """
+    BASE <file:///examples/>
+    PREFIX : <file:///examples/>
+    SELECT ?rule WHERE {
+    :rule :recipe ?rule
+    }
+    """
+    rules = [rule.asdict()["rule"].value for rule in examples_graph.query(rules)]
+    return {
+        "examples": documents, 
+        "reference": list(paths.values()), 
+        "rules": rules
+    }

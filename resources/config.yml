@@ -13,7 +13,7 @@ models:
         gateway_url: !concat [*endpoint,*embedding,':predict']
 knowledge:
     documents:
-        metrics: !read_csv 'resources/metrics.csv'
+        examples: 'resources/examples.ttl'
     db:
         path: 'resources/db/vector/'
 bigquery:

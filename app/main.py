@@ -6,9 +6,10 @@ from models_api.function_template import tools
 from models_api.gemini_api import (chat_request, 
                                    chat_api_message)
 from models_api.generate import llm
+from models_api.vectorize import vectorDB
 from utils.cert import load_wmt_ca_bundle
 from utils.logging import get_logger
-from app.metrics import find_relevant_metrics
+from app.knowledge import get_relevant_examples
 from app import functions
 
 
@@ -18,13 +19,14 @@ class chatbot:
         self.ba = llm(system_prompt, functions=tools)
         self.chat = chat_api_message()
         self.logger = get_logger(debug_mode)
+        self.examples_db = vectorDB(name="examples")
 
     def answer(self, prompt:str) -> Dict[str, str]:
         try:
             self.logger.info("prompt | %s", prompt)
-            relevant_metrics = find_relevant_metrics(prompt)
-            self.logger.info("relevant metrics | %s", relevant_metrics)
-            self.chat.append("user", prompt, formatter=lambda role, user_prompt: f"{user_prompt}\n\n{relevant_metrics}")
+            relevant_examples = get_relevant_examples(prompt, self.examples_db)
+            self.logger.info("relevant examples | %s", relevant_examples)
+            self.chat.append("user", prompt, formatter=lambda role, user_prompt: f"{user_prompt}\n\n{relevant_examples}")
             while True:
                 EOS = self.generate_response()
                 if EOS:

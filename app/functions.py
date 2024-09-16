@@ -2,7 +2,7 @@ import pandas as pd
 from typing import List, Dict
 from functools import lru_cache
 
-from app.metrics import find_relevant_metrics
+from app.knowledge import get_relevant_examples
 from utils.config import conf
 from utils.utils import bigquery_job
 
