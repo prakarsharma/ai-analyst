@@ -25,8 +25,6 @@ class chatbot:
             relevant_metrics = find_relevant_metrics(prompt)
             self.logger.info("relevant metrics | %s", relevant_metrics)
             self.chat.append("user", prompt, formatter=lambda role, user_prompt: f"{user_prompt}\n\n{relevant_metrics}")
-            self.generate_response(allowed_function_names=["get_markdown_table"])
-            self.call_any_function()
             while True:
                 EOS = self.generate_response()
                 if EOS:
