@@ -1,40 +1,48 @@
 @prefix :  </examples/> .
 
-:rule :recipe "Group all calculations by plan version timestamp and gate." .
-:rule :recipe "Summarize the results." .
+:rule :recipe "Always group by plan version timestamp and gate in the query." .
+:rule :recipe "Always summarize the results in the query." .
 
 :opt_plan :name "Optimization plan" ;
-    :recipe "An optimization plan runs the optimizer to assign a markdown price (and markdown percent) to each store-item part of the plan. There can be multiple versions of a plan as the plan is run over time." ;
-    :refrence :md ;
-    :reference :opt .
+    :query_string "optimization plan" ;
+    :recipe "An optimization plan runs the optimizer to assign a markdown price to each store-item part of the plan. A plan is identified by a plan ID. Multiple versions of a plan can be created over time." .
+    # With each version the markdown percent, achieved STR and markdown spend may change because of changes to the inputs, guardrails and constraints in the optimizer.
+    # :refrence :md ;
+    # :reference :str ;
+    # :reference :md_spnd ;
+    # :reference :opt .
 
 :opt :name "Optimizer" ;
-    :recipe "The optimizer is a system which uses elasticity to find the optimum markdown price (and markdown percent) such that sales (and STR) increase. The objective is to meet the target STR while keeping markdown percent and markdown price within guardrails and the markdown spend within budget." ;
+    :query_string "optimizer" ;
+    :query_string "optimization" ;
+    :recipe "The optimizer is a system which uses elasticity to find the optimum reduction in markdown price (equivalent to an increment in markdown percent) which increases sales (and achieved STR) by an optimum amount. The objective is to meet the target STR for each store-item while keeping markdown price and markdown percent within guardrails and constraining the markdown spend within the budget for all the store-items. Other inputs to the optimizer are the gate date and the starting inventory at gate for the store-time." ;
     :reference :elst ;
-    :reference :md ;
-    :reference :str ;
+    :reference :sic ;
     :reference :grd_rail ;
     :reference :bdgt ;
-    :hint :opt_res .
+    :reference :inv ;
+    :hint :oos .
 
-:opt_res :recipe "The optimization may succeed or fail or not run. Optimization result and the reason it failed or was not run are captured in markdown reason codes." .
+:oos :recipe "Sales can never exceed the starting inventory. If the sales equals the inventory or the inventory is zero it is called an Out Of Stock event. In this event sales (and STR) do not increase with any increase in markdown percent irrespective of elasticity." .
 
 :grd_rail :name "Guardrails" ;
-    :recipe "Guardrails are constraints on price and discount input by the user." ;
-    :reference :md .
+    :recipe "Guardrails are the constraints price and discount (markdown percent): minimum and maximum feasible price, minimum and maximum discount percentage and minimum absolute discount (dollar markdown)." .
 
-:bdgt :name "Budget" ;
-    :recipe "Budget is a constraint on total markdown spend input by the user." .
+# :bdgt :name "Budget" ;
+    # :recipe "Budget is a constraint on total markdown spend." .
 
 :elst :name "Elasticity" ;
     :recipe "Elasticity is a number which tells the expected increase in sales with a decrease in price. It is equivalent to the expected increase in STR by increase in markdown percent." ;
     :reference :str ;
     :reference :md .
 
-:oos :name "Out of stock" ;
-    :recipe "Sales cannot exceed the starting inventory. In this event sales (and STR) cannot increase no matter the discount." ;
-    :reference :inv ;
-    :reference :md .
+:opt_res :name "optimization results" ;
+    :query_string "optimization results" ;
+    :query_string "optimization reasons" ;
+    :query_string "pricing reasons" ;
+    :query_string "markdown reasons" ;
+    :recipe "It is defined as: the distribution by markdown reason codes." .
+    # The optimization may succeed or fail or not run. Optimization result and the reason it failed or was not run are captured in markdown reason codes.
 
 :dol_md :name "dollar markdown" ;
     :query_string "What is dollar markdown?" ;
@@ -56,14 +64,16 @@
     :hint :md_bin ;
     :hint :pctl ;
     :hint :pct ;
+    :hint :zero_div_err ;
     :reference :dol_md ;
     :reference :inv .
 
-:md_avg :recipe "To aggregate or average: do not use SQL AVG function. Compute sum of dollar markdown/ sum of markdown prior price." .
+:md_avg :recipe "To find average markdown percent: compute sum of dollar markdown/ sum of markdown prior price . Do not use SQL AVG function." .
 :md_wt_avg :recipe "To weight average: weight with starting inventory. Compute sum of weighted markdown percent/ sum of starting inventory" .
 :md_bin :recipe "To group by markdown precent: discretize into fixed width bins of width 10% and an upper limit of 100%. Negative or zero, Nulls and > 100% each are separate bins. Group by the bins." .
 :pctl :recipe "To find percentile use SQL APPROX_QUANTILES function." .
 :pct :recipe "It is a percentage." .
+:zero_div_err :recipe "Use CASE statement to avoid zero division error." .
 
 :inv :name "starting inventory" ;
     :query_string "What is starting inventory?" ;
@@ -78,9 +88,10 @@
     :hint :str_wt_avg ;
     :hint :pctl ;
     :hint :pct ;
+    :hint :zero_div_err ;
     :reference :inv .
 
-:str_avg :recipe "To aggregate or average: do not use SQL AVG function. Compute weighted average STR ." .
+:str_avg :recipe "To find average STR: compute weighted average STR. Do not use SQL AVG function." .
 :str_wt_avg :recipe "To weight average: weight with starting inventory. Compute sum of weighted STR/ sum of starting inventory ." .
 
 :sic :name "store-item" ;
@@ -98,14 +109,19 @@
     # :query_string "What is md spend?" ;
     :recipe "It is defined as: (markdown percent/ 100) * markdown prior price * starting inventory ." ;
     :reference :md ;
-    :reference :inv .
+    :reference :inv ;
+    :hint :doll .
 
-:sum_stat :query_string "summary statistics" ;
-    :recipe "minimum markdown percent, maximum markdown percent, average markdown percent, weighted average markdown percent, 10th percentile markdown percent, 90th percentile markdown percent, average STR, total starting inventory and number of SICs." ;
+:doll :recipe "It is dollar amount." .
+
+:sum_stat :name "Summary statistics" ;
+    :query_string "summary statistics" ;
+    :recipe "minimum markdown percent, maximum markdown percent, average markdown percent, weighted average markdown percent, 10th percentile markdown percent, 90th percentile markdown percent, average STR, total starting inventory, total markdown spend and number of SICs." ;
     :reference :md ;
     :reference :str ;
-    :reference :sic ;
-    :reference :inv .
+    :reference :md_spnd ;
+    :reference :inv ;
+    :reference :sic .
 
 :md_chng :part :md ;
     :part :chng ;
@@ -132,41 +148,46 @@
     :reference :md_spnd ;
     :reference :chng .
 
+# :opt_res_chng :part :opt_res ;
+    # :part :chng ;
+    # :reference :opt_res ;
+    # :reference :chng .
+
 :chng :name "Change" ;
     :query_string "How to calculate its change?" ;
     :query_string "How to find a change in its value?" ;
     :query_string "How much has it changed?" ;
     :recipe "Find the change over time, i.e., change in its value from the previous plan version timestamp. Calculate its value - its value for the previous plan version timestamp ." .
 
-:md_ord :part :md ;
-    :part :ord ;
-    :reference :md ;
-    :reference :ord .
+# :md_ord :part :md ;
+    # :part :ord ;
+    # :reference :md ;
+    # :reference :ord .
 
-:str_ord :part :str ;
-    :part :ord ;
-    :reference :str ;
-    :reference :ord .
+# :str_ord :part :str ;
+    # :part :ord ;
+    # :reference :str ;
+    # :reference :ord .
 
-:inv_ord :part :inv ;
-    :part :ord ;
-    :reference :inv ;
-    :reference :ord .
+# :inv_ord :part :inv ;
+    # :part :ord ;
+    # :reference :inv ;
+    # :reference :ord .
 
-:sic_ord :part :sic ;
-    :part :ord ;
-    :reference :sic ;
-    :reference :ord .
+# :sic_ord :part :sic ;
+    # :part :ord ;
+    # :reference :sic ;
+    # :reference :ord .
 
-:md_spnd_ord :part :md_spnd ;
-    :part :ord ;
-    :reference :md_spnd ;
-    :reference :ord .
+# :md_spnd_ord :part :md_spnd ;
+    # :part :ord ;
+    # :reference :md_spnd ;
+    # :reference :ord .
 
-:ord :name "Order" ;
-    :query_string "Order by it from high to low." ;
-    :query_string "Order by it from low to high." ;
-    :recipe "Order by and return a limited number of records." .
+# :ord :name "Order" ;
+    # :query_string "Order by it from high to low." ;
+    # :query_string "Order by it from low to high." ;
+    # :recipe "Order by and return a limited number of records." .
 
 :md_val :part :md ;
     :part :val ;
@@ -205,38 +226,51 @@
     :part :chng ;
     :part :chng_rsn ;
     :reference :md ;
+    :reference :chng ;
     :reference :chng_rsn .
 
 :str_chng_rsn :part :str ;
     :part :chng ;
     :part :chng_rsn ;
     :reference :str ;
+    :reference :chng ;
     :reference :chng_rsn .
 
-:inv_chng_rsn :part :inv ;
-    :part :chng ;
-    :part :chng_rsn ;
-    :reference :inv ;
-    :reference :chng_rsn .
+# :inv_chng_rsn :part :inv ;
+    # :part :chng ;
+    # :part :chng_rsn ;
+    # :reference :inv ;
+    # :reference :chng ;
+    # :reference :chng_rsn .
 
-:sic_chng_rsn :part :sic ;
-    :part :chng ;
-    :part :chng_rsn ;
-    :reference :sic ;
-    :reference :chng_rsn .
+# :sic_chng_rsn :part :sic ;
+    # :part :chng ;
+    # :part :chng_rsn ;
+    # :reference :sic ;
+    # :reference :chng ;
+    # :reference :chng_rsn .
 
 :md_spnd_chng_rsn :part :md_spnd ;
     :part :chng ;
     :part :chng_rsn ;
     :reference :md_spnd ;
+    :reference :chng ;
     :reference :chng_rsn .
+
+# :md_spnd_fact :name "markdown spend factors" ;
+    # :recipe "factors which can affect markdown spend: budget, guardrails, weighted average markdown percent, number of store-item combinations and gate start dates." ;
+    # :reference :grd_rail ;
+    # :reference :md ;
+    # :reference :sic .
 
 :chng_rsn :name "Change reasons" ;
     :query_string "Reasons for its change." ;
+    :query_string "Reasons it has changed" ;
     :query_string "Reasons why it has changed." ;
-    :recipe "Find the change in values of all the factors which could have affected it." ;
-    :reference :chng ;
-    :reference :opt_plan .
+    :recipe "A change can be explained by: changes in the optimization results. Calculate the change in optimization results." ;
+    :reference :opt_res ;
+    :reference :chng .
+    # :reference :opt .
 
 # :md_chng_reas :query_string "reasons for change in markdown (discount)" ;
     # :recipe "Plan ID, change in markdown, change in target STR, change in STR, change in budget, change in inventory, previous markdown reason and latest markdown reason." ;
