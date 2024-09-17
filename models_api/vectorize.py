@@ -111,10 +111,10 @@ class vectorDB:
         try:
             node_sim = similarities.groupby("node", as_index=False).agg("max")[["node", "similarity"]]
             similarities = similarities.merge(node_sim, on=["node"], suffixes=["","_max"])
-            similarities = similarities.loc[(similarities["similarity"] == similarities["similarity_max"]) &\
-                                        (similarities["similarity"] > 0.5), :].copy()
+            similarities = similarities.loc[similarities["similarity"] == similarities["similarity_max"], :].copy()
             similarities["probability"] = softmax(similarities["similarity"].values)
-            matches = similarities.loc[similarities["probability"] > 1/len(similarities), :].copy()
+            matches = similarities.loc[(similarities["similarity"] > 0.5) &\
+                                       (similarities["probability"] > 1/len(similarities)), :].copy()
             if len(matches) > 1:
                 matches = vectorDB.group_match(matches)
                 highest_Fscore = matches["F"].max()
