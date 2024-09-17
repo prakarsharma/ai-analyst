@@ -104,13 +104,11 @@ def get_relevant_examples(prompt:str, examples_db:vectorDB, top_n:Optional[int]=
                     hints = [res.asdict().get("hint").value for res in examples_graph.query(hints)]
                     path = {
                         node: {
-                            reference: {
-                                "recipe": recipe
-                            }
+                            reference: recipe
                         }
                     }
                     if hints:
-                        path[node][reference].update({"hints": hints})
+                        path[node].update({"hints": hints})
                     paths.update(path)
     rules = """
     BASE <file:///examples/>
