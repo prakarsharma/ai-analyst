@@ -70,7 +70,7 @@ def upsert_parent_nodes(examples_db):
         embdngs = [embdng.tolist() for embdng in list(list(items.values())[-1].values())]
         examples_db.upsert(docs, embdngs, metadata=id_)
 
-def get_relevant_examples(prompt:str, examples_db:vectorDB, top_n:Optional[int]=2, **metadata) -> Dict[str, List[str]]:
+def get_relevant_examples(prompt:str, examples_db:vectorDB, top_n:Optional[int]=None, **metadata) -> Dict[str, List[str]]:
     paths = {}
     documents = []
     if prompt:

@@ -73,7 +73,7 @@ class vectorDB:
             kwargs.update({"where": metadata})
         return self.db.get(**kwargs)
     
-    def top_matches(self, document:str, top_n:Optional[int]=1, **metadata) -> List[str]:
+    def top_matches(self, document:str, top_n:Optional[int]=None, **metadata) -> List[str]:
         search_result = self.query(document, **metadata)
         if search_result:
             matches = vectorDB.tabulate_results(search_result)

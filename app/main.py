@@ -24,7 +24,7 @@ class chatbot:
     def answer(self, prompt:str) -> Dict[str, str]:
         try:
             self.logger.info("prompt | %s", prompt)
-            relevant_examples = get_relevant_examples(prompt, self.examples_db)
+            relevant_examples = get_relevant_examples(prompt, self.examples_db, top_n=1)
             self.logger.info("relevant examples | %s", relevant_examples)
             self.chat.append("user", prompt, formatter=lambda role, user_prompt: f"{user_prompt}\n\n{relevant_examples}")
             while True:
