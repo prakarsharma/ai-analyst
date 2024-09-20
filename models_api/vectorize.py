@@ -65,14 +65,6 @@ class vectorDB:
                 kwargs.update({"embeddings":[embeddings[i]]})
             self.db.upsert(**kwargs)
 
-    def get(self, ids:Optional[List[str]]=None, **metadata):
-        kwargs = {"include": ["documents", "embeddings"]}
-        if ids:
-            kwargs.update({"ids": ids})
-        if metadata:
-            kwargs.update({"where": metadata})
-        return self.db.get(**kwargs)
-    
     def top_matches(self, document:str, top_n:Optional[int]=None, **metadata) -> List[str]:
         search_result = self.query(document, **metadata)
         if search_result:
@@ -109,9 +101,6 @@ class vectorDB:
 
     def match(similarities:pd.DataFrame, return_matching:bool=True) -> pd.DataFrame:
         try:
-            node_sim = similarities.groupby("node", as_index=False).agg("max")[["node", "similarity"]]
-            similarities = similarities.merge(node_sim, on=["node"], suffixes=["","_max"])
-            similarities = similarities.loc[similarities["similarity"] == similarities["similarity_max"], :].copy()
             similarities["probability"] = softmax(similarities["similarity"].values)
             matches = similarities.loc[(similarities["similarity"] > 0.5) &\
                                        (similarities["probability"] > 1/len(similarities)), :].copy()

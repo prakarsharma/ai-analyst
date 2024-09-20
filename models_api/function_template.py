@@ -13,7 +13,7 @@ tools = [
                 },
                 "query": {
                     "type": "string",
-                    "description": """a SQL query. Note that the query should be in Google SQL syntax. Use only the columns names in the schema of the used table. Do not quote the column names. Deduplicate the non-numeric columns in the query to avoid returning too many records. Note that the user requires results in summarized form so aggregate the numeric columns, grouping by appropriate columns. But do not group by numeric columns or calculated expressions. Include the columns used to group by in the results. Use appropriate aliases where applicable. Use only the formulae and hints provided as reference for the calculations and strictly follow all the given rules."""
+                    "description": """a SQL query. Note that the query should be in Google SQL syntax. Do not quote the column names. If the query does not contain all the primary key columns make sure it deduplicates records. The result should always be aggregated. It could be grouped by appropriate column(s). If the quesry doesn't deduplicate or aggregate it can return millions of records - limit the number of records returned in this case. Avoid zero-division error in calculation. Sort results by suitable columns and use appropriate aliases where applicable. Use only the provided recipe for calculations."""
                 }
             },
             "required": [

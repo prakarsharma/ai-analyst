@@ -14,7 +14,6 @@ def graph_to_DB():
     os.makedirs(conf["knowledge"]["db"]["path"])
     examples_db = vectorDB(name="examples")
     upsert_child_nodes(examples_db)
-    upsert_parent_nodes(examples_db)
     return f"upserted {examples_db.n_docs} documents"
 
 def upsert_child_nodes(examples_db):
@@ -35,56 +34,19 @@ def upsert_child_nodes(examples_db):
     for id_, docs in documents.items():
         examples_db.upsert(docs, metadata=id_)
 
-def upsert_parent_nodes(examples_db):
-    document_parts = """
-    PREFIX : <file:///examples/>
-    SELECT ?node ?part ?document WHERE {
-        ?node :part+/:query_string ?document .
-        ?part :query_string ?document
-    }
-    """
-    _id_ = ""
-    examples = {_id_: {"": {}}}
-    for node in examples_graph.query(document_parts):
-        items = node.asdict()
-        id_ = items.get("node").removeprefix("file:///examples/")
-        part = items.get("part").removeprefix("file:///examples/")
-        doc = items.get("document").value
-        if id_ != _id_:
-            examples[_id_].pop("")
-            _id_ = id_
-            _part_ = ""
-            examples[_id_] = {_part_: {"": 0}}
-        if part != _part_:
-            _part = _part_
-            _part_ = part
-            examples[_id_][_part_] = {}
-            embdngs = examples_db.get(metadata=_part_)
-            embdngs = {_doc_:_embdng_ for _doc_, _embdng_ in zip(embdngs["documents"], embdngs["embeddings"])}
-        embdng = embdngs[doc]
-        for _doc, _embdng in examples[_id_][_part].items():
-            examples[_id_][_part_].update({f"{_doc} {doc}": np.array(_embdng) + np.array(embdng)})
-    examples.pop("")
-    for id_, items in examples.items():
-        docs = list(list(items.values())[-1].keys())
-        embdngs = [embdng.tolist() for embdng in list(list(items.values())[-1].values())]
-        examples_db.upsert(docs, embdngs, metadata=id_)
-
 def get_relevant_examples(prompt:str, examples_db:vectorDB, top_n:Optional[int]=None, **metadata) -> Dict[str, List[str]]:
     paths = {}
-    documents = []
     if prompt:
         matches = examples_db.top_matches(prompt, top_n, **metadata)
-        documents = examples_db.get(ids=matches["index"])["documents"]
-        for node in matches["node"]:
+        for match in matches["node"]:
             supporting_documents = """
             BASE <file:///examples/>
             PREFIX : <file:///examples/>
             SELECT ?child ?reference ?recipe WHERE """ +\
             "{" +\
             f"""
-            <{node}> :reference*/:name ?reference .
-            ?child :name ?reference .
+            <{match}> :reference*/:query_string ?reference .
+            ?child :query_string ?reference .
             ?child :recipe ?recipe .""" +\
             "}"
             for child in examples_graph.query(supporting_documents):
@@ -93,33 +55,22 @@ def get_relevant_examples(prompt:str, examples_db:vectorDB, top_n:Optional[int]=
                 reference = items["reference"].value
                 recipe = items["recipe"].value
                 if node not in paths:
-                    hints = """
+                    suggestions = """
                     BASE <file:///examples/>
                     PREFIX : <file:///examples/>
-                    SELECT ?hint WHERE {
+                    SELECT ?suggestion WHERE {
                     OPTIONAL {""" +\
-                    f"<{node}> :hint/:recipe ?hint" +\
+                    f"<{node}> :suggestion+/:recipe ?suggestion" +\
                     """}
                     }"""
-                    hints = [res.asdict().get("hint").value for res in examples_graph.query(hints)]
+                    suggestions = [res.asdict().get("suggestion").value for res in examples_graph.query(suggestions)]
                     path = {
                         node: {
-                            reference: recipe
+                            reference: {
+                                "recipe": recipe, 
+                                "suggestions": suggestions
+                            }
                         }
                     }
-                    if hints:
-                        path[node].update({"hints": hints})
                     paths.update(path)
-    rules = """
-    BASE <file:///examples/>
-    PREFIX : <file:///examples/>
-    SELECT ?rule WHERE {
-    :rule :recipe ?rule
-    }
-    """
-    rules = [rule.asdict()["rule"].value for rule in examples_graph.query(rules)]
-    return {
-        "examples": documents, 
-        "reference": list(paths.values()), 
-        "rules": rules
-    }
+    return {"reference": list(paths.values())}

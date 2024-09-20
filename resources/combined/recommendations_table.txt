@@ -1,1 +1,1 @@
-This table contains data on optimzation plan version runs for upto 2 gates. Each plan represents a group of stores and items whose markdown prices are optimized for a gate over multiple versions under a set of constraints to meet an objective. A plan version is represented by its creation timestamp.
+This table contains data on optimzation plan runs. Each plan represents a group of stores and items.
