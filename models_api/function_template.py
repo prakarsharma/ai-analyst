@@ -31,5 +31,24 @@ tools = [
             "properties": {},
             "required": [],
         }
+    },
+
+    {
+        "name": functions.get_dept_sbu_mapping.__name__,
+        "description": functions.get_dept_sbu_mapping.__doc__,
+        "parameters": {
+            "type": "object", 
+            "properties": {
+                "sbu": {
+                    "type": "string", 
+                    "description": "name of SBU correpsonding to which department names or numbers are required."
+                },
+                "dept": {
+                    "type": "integer", 
+                    "description": "Department number corresponding to which a SBU name is required."
+                },
+            },
+            "required": [],
+        }
     }
 ]

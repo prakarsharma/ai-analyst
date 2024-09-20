@@ -1,5 +1,5 @@
 import pandas as pd
-from typing import List, Dict
+from typing import List, Dict, Optional
 from functools import lru_cache
 
 from app.knowledge import get_relevant_examples
@@ -35,3 +35,35 @@ def get_markdown_table(sbu:str="combined", **kwargs) -> Dict:
     """
     metadata = conf["bigquery"].get(sbu.lower())
     return metadata
+
+@lru_cache
+def get_dept_sbu_mapping(sbu:Optional[str]=None, 
+                         dept:Optional[int]=None, 
+                         mapping_table:str=pd.read_csv("resources/combined/dept_SBU_mapping.csv"), **kwargs) -> List[Dict]:
+    """
+    Get the department name and number from SBU name or SBU name from department number.
+    
+    Returns
+    _______
+    dict
+        A list of department names and numbers or SBU names.
+    """
+    SBUs = ["APPAREL", "ENTERTAINMENT TOYS AND SEASONAL", "HARDLINES", "HOME", "FOOD", "CONSUMABLES", "HEALTH AND WELLNESS"]
+    Departments = [str(i + 1) for i in range(99) if i + 1 != 68]
+    if sbu:
+        if sbu.upper() not in SBUs:
+            return {
+                "error": f"sbu not found in the list of valid SBU names: {','.join(SBUs)}"
+            }
+        mapping = mapping_table.loc[mapping_table["SBU"] == sbu.upper(),["Dept_nbr","Dept_desc"]]
+    elif dept:
+        if str(dept) not in Departments:
+            return {
+                "error": f"dept not found in the list of valid dept numbers: {','.join(Departments)}"
+            }        
+        mapping = mapping_table.loc[mapping_table["Dept_nbr"] == dept,["SBU"]]
+    else:
+        return {
+                "error": "neither sbu or dept was provided. Provide one of them to get mapping."
+            }
+    return mapping.to_dict(orient="records")
