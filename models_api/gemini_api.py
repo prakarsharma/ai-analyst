@@ -97,8 +97,8 @@ class chat_request:
 
 
 class chat_api_message:
-    def __init__(self, user_prompt:str=None):
-        self._messages = []
+    def __init__(self, user_prompt:str=None, warm_start:List[Dict]=[]):
+        self._messages = warm_start
         if user_prompt:
             self.append("user", user_prompt)
 

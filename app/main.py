@@ -10,6 +10,7 @@ from models_api.vectorize import vectorDB
 from utils.cert import load_wmt_ca_bundle
 from utils.logging import get_logger
 from app.knowledge import get_relevant_examples
+from app.history import history
 from app import functions
 
 
@@ -17,7 +18,7 @@ class chatbot:
     def __init__(self, debug_mode=False, safe_mode=False):
         load_wmt_ca_bundle()
         self.ba = llm(system_prompt, functions=tools)
-        self.chat = chat_api_message()
+        self.chat = chat_api_message(warm_start=history)
         self.logger = get_logger(debug_mode)
         self.examples_db = vectorDB(name="examples")
 
