@@ -16,12 +16,13 @@ if "messages" not in st.session_state.keys(): # Initialize the chat message hist
 
 with st.expander("Sample questions", expanded=False):
     questions = """
-- Which SBU does department 34 belongs to?
-- Number of departments in consumables sbu.
-- Find average STR for a plan ID 3938522.
-- How many item-store combinations for plan id 3823508 with 0 start inventory by week?
-- What's the 90th percentile markdown for plan no. 3938522?
-- Calculate summary statistics for plan 3823508.
+- How many departments are there in Apparel?
+- How does optimization work?
+- Find average STR for a plan 3964740 by gate and plan run.
+- How many item-store combinations for plan id 3823508 have 0 start inventory by gate?
+- Summary statistics for plan 3823508.
+- How much has markdown spend changed for plan 4000011?
+- Why has markdown spend changed for plan 4000011?
 """
     st.write(questions)
 
