@@ -60,7 +60,7 @@ def get_relevant_examples(prompt:str, examples_db:vectorDB, top_n:Optional[int]=
                     PREFIX : <file:///examples/>
                     SELECT ?suggestion WHERE {
                     OPTIONAL {""" +\
-                    f"<{node}> :suggestion+/:recipe ?suggestion" +\
+                    f"<{node}> :suggestion ?suggestion" +\
                     """}
                     }"""
                     suggestions = [res.asdict().get("suggestion").value for res in examples_graph.query(suggestions)]

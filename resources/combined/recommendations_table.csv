@@ -23,36 +23,28 @@ cmd_cat_nbr,INTEGER,
 retail,NUMERIC,Recommended markdown price
 group_original_price,NUMERIC,Group price. Used in the constraints in optimization.
 item_original_price,NUMERIC,Markdown prior price
+markdown_percentage,NUMERIC,Markdown percentage (discount)
+markdown_spend,NUMERIC,Markdown spend (dollars)
 sold_unit,NUMERIC,Estimated sales quantity (units) for the gate duration
 selected_elasticity,NUMERIC, 
 selected_daily_sale,STRING, 
 str_achieved,NUMERIC,Sell Through Rate (STR) expected with markdown. The STR achieved by mathematical optimization.
 str_wo_markdown,NUMERIC,Expected Sell Through Rate (STR) without markdown
 str_max_feasible,NUMERIC,Expected Sell Through Rate (STR) with max feasible markdown
-min_price_point,NUMERIC,"Minimum feasible price based on min discount percentage, min discount dollar amount and rounding rules."
-max_price_point,NUMERIC,"Maximum feasible price based on max discount percentage, max discount dollar amount and rounding rules."
+min_price_point,NUMERIC,Minimum feasible price used as a constraint in optimization.
+max_price_point,NUMERIC,Maximum feasible price used as a constraint in optimization.
 target_str,NUMERIC,Sell Through Rate (STR) target for the optimizer.
 upstream_inv,NUMERIC, 
 projected_upstream_inv,NUMERIC,Projected upstream inventory (inventory not already accounted) at gate date
 upstream_inv_sold,NUMERIC,Estimated sale from upstream inventory
 price_grouping_type,STRING, 
 price_grouping_id,INTEGER, 
-budget,NUMERIC,Budget value input by the user used as a constraint in optimization.  It is unique for a plan run.
-max_discount_percentage,NUMERIC,Max discount percentage value input by the user used as a constraint in optimization. It is unique for a plan run.
-min_discount_percentage,NUMERIC,Min discount percentage value input by the user used as a constraint in optimization. It is unique for a plan run.
-min_discount_absolute,NUMERIC,Absolute min discount value input by the user used as a constraint in optimization. It is unique for a plan run.
-markdown_reason,STRING,"Remarks on markown pricing optimization. A code which represents a particular optimization result or markdown pricing reason. Valid codes are:
-'OPTIMIZER_STR_ACHIEVED': optimal discount solution satisfies target STR requirement and achieves the highest gate sales it could.
-'LOW_PRICE': Group price meets the low price criteria. Applied the low price rule directly without optimization.
-'OPTIMIZER_STR_NOT_ACHIEVED_STORE_INVENTORY': optimal discount solution DOES NOT satisfy target STR requirement due to the remaining store inventory.
-'OPTIMIZER_STR_NOT_ACHIEVED_UPSTREAM_INVENTORY': optimal discount solution DOES NOT satisfy target STR requirement due to the remaining upstream inventory.
-'INFEASIBLE_DEFAULT_MARKDOWN': infeasible optimization. No feasible markdown price lies within min and max bounds. Applied default markdown.
-'BUDGET_INFEASIBLE_MIN_MARKDOWN': infeasible optimization. The plan does not stay witihn the budget required. Applied min markdown.
-'MISSING_ELASTICITY_MIN_MARKDOWN': missing elasticity. Applied min markdown.
-'ZERO_OR_MISSING_AVG_DAILY_SALE_MIN_MARKDOWN': zero or missing average daily sales data. Applied min markdown.
-'ZERO_OR_MISSING_PROJECTED_INVENTORY_MIN_MARKDOWN': zero or missing projected start inventory at gate
-'MARKDOWN_NOT_NEEDED': markdown is not mandatory. Target STR achieved without any markdown."
+budget,NUMERIC,Budget value input by the user used as a constraint in optimization.
+max_discount_percentage,NUMERIC,Max discount percentage value input by the user used as a constraint in optimization.
+min_discount_percentage,NUMERIC,Min discount percentage value input by the user used as a constraint in optimization.
+min_discount_absolute,NUMERIC,Absolute min discount value input by the user used as a constraint in optimization.
+markdown_reason,STRING,"A code which represents a particular optimization result and a reason for markdown pricing. Explains whether the optimizer was run or not for the plan version, if optimization was a success or failure and the reason for its failure. Valid codes are: 'OPTIMIZER_STR_ACHIEVED': Optimizer run successful. Optimal discount solution satisfies target STR requirement and achieves the highest gate sales it could. 'LOW_PRICE': Optimizer not run. Rule based approach - group price meets the low price criteria. Applied the low price rule directly without optimization. 'OPTIMIZER_STR_NOT_ACHIEVED_STORE_INVENTORY': Optimizer run failed. Optimal discount solution DOES NOT satisfy target STR requirement due to the remaining store inventory. 'OPTIMIZER_STR_NOT_ACHIEVED_UPSTREAM_INVENTORY': Optimizer run failed. Optimal discount solution DOES NOT satisfy target STR requirement due to the remaining upstream inventory. 'INFEASIBLE_DEFAULT_MARKDOWN': Optimization is infeasible. Any feasible markdown price does not lie within minimum and maximum price bounds. Applied default markdown. 'BUDGET_INFEASIBLE_MIN_MARKDOWN': Optimization is infeasible. Markdown spend does not stay witihn the budget required. Applied minimum markdown. 'MISSING_ELASTICITY_MIN_MARKDOWN': Optimizer not run. Rule based approach - elasticity is missing. Applied minimum markdown directly without optimization. 'ZERO_OR_MISSING_AVG_DAILY_SALE_MIN_MARKDOWN': Optimizer not run. Rule based approach - average daily sales data is either zero or missing. Applied minimum markdown directly without optimization. 'ZERO_OR_MISSING_PROJECTED_INVENTORY_MIN_MARKDOWN': Optimizer not run. Rule based approach - projected start inventory at gate is either zero or missing. Applied minimum markdown directly without optimization. 'MARKDOWN_NOT_NEEDED': Optimizer not run. Markdown is not mandatory. Target STR achieved without any markdown."
 error_msg,STRING, 
 model_id,INTEGER, 
-create_timestamp,TIMESTAMP,Plan run creation timestamp in 'yyyy-mm-dd HH:MM:SS' UTC format
+create_timestamp,TIMESTAMP,Plan run creation timestamp in 'yyyy-mm-dd HH:MM:SS' UTC format.
 cmd_plan_id,INTEGER,Plan ID as sent by CMD team. A 7 digit integer. It refers to an optimization plan.
