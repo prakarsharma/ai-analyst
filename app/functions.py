@@ -1,4 +1,6 @@
 import pandas as pd
+from matplotlib import pyplot as plt
+from io import BytesIO
 from typing import List, Dict, Optional
 from functools import lru_cache
 
@@ -67,3 +69,53 @@ def get_dept_sbu_mapping(sbu:Optional[str]=None,
                 "error": "neither sbu or dept was provided. Provide one of them to get mapping."
             }
     return mapping.to_dict(orient="records")
+
+def table(query:str, records:List[Dict]) -> pd.DataFrame:
+    """
+    Make a table from the records returned by a BigQuery job. This function uses a pandas DataFrame as the choice of tabular data structure.
+    
+    Returns
+    -------
+    DataFrame
+        A data frame of the queried records.
+    """
+    return pd.DataFrame(records)
+
+def plot(title:str, x:List, xlabel:str, y:Optional[List]=None, ylabel:str="", plot_type:str="scatter", figsize:List[int]=[8,5]):
+    """
+    Make a plot (chart) from data provided. This function saves a plot image and does not return anything.
+    
+    Returns
+    -------
+        None
+    """
+    buf = BytesIO()
+    df = pd.Series(x, name=xlabel).to_frame()
+    fig = plt.figure(figsize=figsize)
+    plt.suptitle(title)
+    plt.xlabel(xlabel)
+    if y is not None:
+        y_series = pd.Series(y).astype(float)
+        if ylabel:
+            df[ylabel] = y_series
+            plt.ylabel(ylabel)
+    df.sort_values(by=xlabel, ascending=True, inplace=True)
+    try:
+        if plot_type == "line":
+            plt.plot(df[xlabel], df[ylabel])
+        if plot_type == "scatter":
+            plt.scatter(df[xlabel], df[ylabel])
+        if plot_type == "bar":
+            plt.bar(df[xlabel], df[ylabel])
+        if plot_type == "boxplot":
+            plt.boxplot(df[xlabel])
+        if plot_type == "histogram":
+            plt.hist(df[xlabel])
+        if plot_type == "pie":
+            plt.pie(df[xlabel])
+        fig.savefig(buf, format="png")
+        return buf
+    except KeyError as err:
+        return {
+            "error": "provide both x and y to make the plot: either one of the axes is missing or can't be computed"
+        }

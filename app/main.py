@@ -23,21 +23,16 @@ class chatbot:
         self.examples_db = vectorDB(name="examples")
 
     def answer(self, prompt:str) -> Dict[str, str]:
+        self.answer_object = {}
         try:
             self.logger.info("prompt | %s", prompt)
             relevant_examples = get_relevant_examples(prompt, self.examples_db)
             self.logger.info("relevant examples | %s", relevant_examples)
             self.chat.append("user", prompt, formatter=lambda role, user_prompt: f"{user_prompt}\n\n{relevant_examples}")
-            while True:
-                EOS = self.generate_response()
-                if EOS:
-                    last_function_call = self.chat.get_message("model", "functionCall", -1).get("parts", {}).get("functionCall", {})
-                    query = last_function_call.get("args", {}).get("query", "") if last_function_call.get("name", "") == "fetch_data" else ""
-                    return {
-                        "SQL": query, 
-                        "answer": EOS
-                    }
+            while "EOS" not in self.answer_object:
+                self.generate_response()
                 self.call_any_function()
+            return self.answer_object
         except (ValueError, ConnectionError) as err:
             self.logger.error("%s | %s", type(err).__name__, err.args[0], exc_info=True)
             self.chat.pop()
@@ -50,18 +45,25 @@ class chatbot:
         self.logger.info("response | %s", response)
         self.chat.append("model", **response)
         if response["mode"] != "functionCall":
-            return response["response"]
-
+            self.answer_object["EOS"] = "EOS"
+            self.answer_object["answer"] = response["response"]
 
     def call_any_function(self, **kwargs):
         response = self.chat.messages[-1]["parts"]
         if "functionCall" in response:
             name = response["functionCall"]["name"]
-            function_return_object = getattr(functions, name).__call__(**response["functionCall"]["args"], **kwargs)
-            self.logger.debug("function response object | %s", function_return_object)
-            function_response = chat_request.function_response(name, function_return_object)
-            self.logger.info("function response | %s", function_response)
-            self.chat.append("function", function_response, mode="functionResponse")
+            args = response["functionCall"]["args"]
+            function_return_object = getattr(functions, name).__call__(**args, **kwargs)
+            if name not in ["table", "plot"]:
+                self.logger.debug("function response object | %s", function_return_object)
+                function_response = chat_request.function_response(name, function_return_object)
+                self.logger.info("function response | %s", function_response)
+                self.chat.append("function", function_response, mode="functionResponse")
+                if "query" in args:
+                    self.answer_object["SQL"] = args["query"]
+            else:
+                self.answer_object["EOS"] = "EOS"
+                self.answer_object[name] = function_return_object
 
     def capture(self, mode:str, message):
         self.logger.info("%s | %s", mode, message)

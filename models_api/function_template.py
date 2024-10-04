@@ -50,5 +50,54 @@ tools = [
             },
             "required": [],
         }
+    },
+
+    {
+        "name": functions.plot.__name__,
+        "description": functions.plot.__doc__,
+        "parameters": {
+            "type": "object", 
+            "properties": {
+                "title": {
+                    "type": "string", 
+                    "description": "a suitable title for the plot."
+                },
+                "x": {
+                    "type": "array", 
+                    "description": "a list of data to plot on the x axis.", 
+                    "items": {
+                        "description": "a value to show on the x axis.", 
+                        "type": "string"
+                    }
+                },
+                "xlabel": {
+                    "type": "string", 
+                    "description": "a suitable name for the data on x axis."
+                },
+                "y": {
+                    "type": "array", 
+                    "description": "a list of data to plot on the y axis.", 
+                    "items": {
+                        "description": "a value to show on the y axis.", 
+                        "type": "string"
+                    }
+                }, 
+                "ylabel": {
+                    "type": "string", 
+                    "description": "a suitable name for the data on y axis."
+                },
+                "plot_type": {
+                    "type": "string", 
+                    "enum": ["line", "scatter", "bar", "boxplot", "histogram", "pie"], 
+                    "description": "the type of plot."
+                }
+            },
+            "required": [
+                "title", 
+                "x", 
+                "xlabel", 
+                "plot_type"
+            ],
+        }
     }
 ]
