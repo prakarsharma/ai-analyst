@@ -44,12 +44,12 @@ def get_dept_sbu_mapping(sbu:Optional[str]=None,
     Get the department name and number from SBU name or SBU name from department number.
     
     Returns
-    _______
+    -------
     dict
         A list of department names and numbers or SBU names.
     """
-    SBUs = ["APPAREL", "ENTERTAINMENT TOYS AND SEASONAL", "HARDLINES", "HOME", "FOOD", "CONSUMABLES", "HEALTH AND WELLNESS"]
-    Departments = [str(i + 1) for i in range(99) if i + 1 != 68]
+    SBUs = mapping_table["SBU"].unique()
+    Departments = mapping_table["Dept_nbr"].astype(str).unique()
     if sbu:
         if sbu.upper() not in SBUs:
             return {
