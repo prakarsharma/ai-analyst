@@ -29,17 +29,18 @@ pricing = {
 
 def get_price(price:Literal["input","output"]):
     model:str = conf["models"]["llm"]["name"]
-    rate:float = pricing[model]["input"]["rate"]
-    limit:int = pricing[model]["input"].get("limit", 0)
-    unlimited_rate:float = pricing[model]["input"].get("unlimited_rate", 0)
+    rate = pricing[model][price]["rate"]
+    limit = pricing[model][price].get("limit", 0)
+    unlimited_rate = pricing[model][price].get("unlimited_rate", 0)
     count = f"CASE WHEN count <= {limit} THEN count ELSE count * {unlimited_rate/ rate} END" if limit else "count"
-    if price == "input":
-        counter = "promptTokenCount"
-    if price == "output":
-        counter = "candidatesTokenCount"
+    counters = {
+        "input": "promptTokenCount", 
+        "output": "candidatesTokenCount"
+    }
+    counter = counters[price]
     query = f"""
 SELECT
-    SUM({count}) * {rate} AS dollar_cost
+    SUM({count}) * {rate} AS cost_dollars
 FROM
     requested_tokens
 WHERE
