@@ -43,7 +43,7 @@ def get_dept_sbu_mapping(sbu:Optional[str]=None,
                          dept:Optional[int]=None, 
                          mapping_table:str=pd.read_csv("resources/combined/dept_SBU_mapping.csv"), **kwargs) -> List[Dict]:
     """
-    Get the department name and number from SBU name or SBU name from department number.
+    Get the department name and number from SBU name or department name and SBU name from department number.
     
     Returns
     -------
@@ -63,7 +63,7 @@ def get_dept_sbu_mapping(sbu:Optional[str]=None,
             return {
                 "error": f"dept not found in the list of valid dept numbers: {','.join(Departments)}"
             }        
-        mapping = mapping_table.loc[mapping_table["Dept_nbr"] == dept,["SBU"]]
+        mapping = mapping_table.loc[mapping_table["Dept_nbr"] == dept,["Dept_desc","SBU"]]
     else:
         return {
                 "error": "neither sbu or dept was provided. Provide one of them to get mapping."

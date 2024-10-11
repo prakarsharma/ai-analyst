@@ -45,7 +45,7 @@ tools = [
                 },
                 "dept": {
                     "type": "integer", 
-                    "description": "Department number corresponding to which a SBU name is required."
+                    "description": "Department number corresponding to which a department name or SBU name is required."
                 },
             },
             "required": [],
