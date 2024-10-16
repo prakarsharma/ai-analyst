@@ -11,19 +11,20 @@
 
 :grd_rail :query_string "guardrails" ;
     :recipe "the minimum and maximum price constraints on group price." ;
-    :suggestion "To get guardrails: deduplicate them by plan run and gate." ;
-    :suggestion "To find a change in guardrails: do a self join on plan, store, item and gate where plan run timestamp in the left table > plan run timestamp in the right table. Compute (gaurdrails from left table - guardrails from right table) by gate and plan run." .
+    :suggestion "To get guardrails: compute average by plan run and gate." .
+    # :suggestion "To find a change in guardrails: do a self join on plan, store, item and gate where plan run timestamp in the left table > plan run timestamp in the right table. Compute (gaurdrails from left table - guardrails from right table) by gate and plan run." .
 
 :bdgt :query_string "budget" ;
     :recipe "the constraint on markdown spend." ;
     :suggestion "To get budget: deduplicate it by plan run and gate." ;
-    :suggestion "To find budget per item: compute (budget/ total starting inventory for the plan run at gate * starting inventory) ." ;
-    :suggestion "To find a change in budget: do a self join on plan, store, item and gate where plan run timestamp in the left table > plan run timestamp in the right table. Compute (budget from left table - budget from right table) by gate and plan run." .
+    :suggestion "To find budget per item: compute (budget/ total starting inventory for the plan run at gate * starting inventory) ." .
+    # :suggestion "To find a change in budget: do a self join on plan, store, item and gate where plan run timestamp in the left table > plan run timestamp in the right table. Compute (budget from left table - budget from right table) by gate and plan run." .
 
 :sic :query_string "store-item combination (SIC)" ;
-    :recipe "Concatenate store number and item number." ;
+    :recipe "concatenate store number and item number." ;
     :suggestion "Use SQL CONCAT function." ;
-    :suggestion "To find a change in number of store-items: do a self join on plan, store, item and gate where plan run timestamp in the left table > plan run timestamp in the right table. Compute (number of store-items from left table - number of store-items from right table) by gate and plan run." .
+    :suggestion "To get number of store item combinations (sic): deduplicate and count by plan run and gate." .
+    # :suggestion "To find a change in number of store-items: do a self join on plan, store, item and gate where plan run timestamp in the left table > plan run timestamp in the right table. Compute (number of store-items from left table - number of store-items from right table) by gate and plan run." .
 
 :dol_md :query_string "dollar markdown (absolute discount)" ;
     :recipe "markdown prior price - markdown price ." ;
@@ -35,9 +36,9 @@
     :suggestion "To weight average: compute (sum of weighted markdown/ sum of weights) by gate and plan run. If weights are not specified use starting inventory as the weights." ;
     :suggestion "To find percentile: use SQL APPROX_QUANTILES function to find the percentile by gate and plan run." ;
     :suggestion "To group by markdown: discretize markdown into fixed width bins of width 10% and an upper limit of 100%. Negative or zero, Nulls and > 100% each are separate bins. Group by the bins, gate and plan run." ;
-    :suggestion "To find a change in markdown: do a self join on plan, store, item and gate where plan run timestamp in the left table > plan run timestamp in the right table. Compute (average markdown from left table - average markdown from right table) by gate and plan run." ;
+    # :suggestion "To find a change in markdown: do a self join on plan, store, item and gate where plan run timestamp in the left table > plan run timestamp in the right table. Compute (average markdown from left table - average markdown from right table) by gate and plan run." ;
     :suggestion "To explain the assigned markdown value, follow these steps: \n1. give a markdown reasons summary. \n2. check if guardrails are too strict. Compute the percentage difference between group price and the gaurdrails. \n3. check if budget is too strict. Find the budget per item. Compute the percentage difference between markdown spend and budget per item. \n4. check if inventory is sufficient. Find the sale without markdown. Compute the percentage difference between starting inventory and sale without markdown." ;
-    :suggestion "To explain a change in markdown: find the change in guardrails, budget, store-item combinations, starting inventory and gate dates. Those are all the factors which affect markdown." ;
+    # :suggestion "To explain a change in markdown: find the change in guardrails, budget, store-item combinations, starting inventory and gate dates. Those are all the factors which affect markdown." ;
     :reference :dol_md ;
     :reference :inv ;
     :reference :md_rsn ;
@@ -48,8 +49,8 @@
 
 :inv :query_string "starting inventory" ;
     :recipe "projected starting inventory + projected upstream inventory" ;
-    :suggestion "To total: compute sum by plan run and gate." ;
-    :suggestion "To find a change in inventory: do a self join on plan, store, item and gate where plan run timestamp in the left table > plan run timestamp in the right table. Compute (total inventory from left table - total inventory from right table) by gate and plan run." .
+    :suggestion "To total: compute sum by plan run and gate." .
+    # :suggestion "To find a change in inventory: do a self join on plan, store, item and gate where plan run timestamp in the left table > plan run timestamp in the right table. Compute (total inventory from left table - total inventory from right table) by gate and plan run." .
 
 :md_rsn :query_string "markdown reasons" ;
     :recipe "optimization result (markdown reason) code" ;
@@ -61,7 +62,7 @@
     :suggestion "To total: compute sum by plan run and gate." .
 
 :md_spnd :query_string "markdown spend" ;
-    :recipe "the markdown spend." ;
+    :recipe "markdown spend. It is also defined as (dollar markdown * starting inventory) ." ;
     :suggestion "To total: compute sum by plan run and gate." ;
     :suggestion "To find a change in markdown spend: do a self join on plan, store, item and gate where plan run timestamp in the left table > plan run timestamp in the right table. Compute (total markdown spend from left table - total markdown spend from right table) by gate and plan run." ;
     :suggestion "To explain the change in markdown spend: find the change in guardrails, budget, store-item combinations, starting inventory and gate dates. Those are all the factors which affect markdown." ;
@@ -72,7 +73,7 @@
     :reference :sic .
 
 :str :query_string "Sell Through Rate (STR)" ;
-    :recipe "the achieved STR." ;
+    :recipe "achieved STR. It is also defined as (sales quantity (units)/ starting inventory) ." ;
     :suggestion "To average: compute weighted average of STR weighted with starting inventory by plan run and gate."  ;
     :suggestion "To weight average: compute (sum of weighted STR/ sum of weights) by gate and plan run. If weights are not specified use starting inventory as the weights." ;
     :suggestion "To find percentile: use SQL APPROX_QUANTILES function to find the percentile by gate and plan run." ;
