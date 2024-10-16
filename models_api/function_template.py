@@ -79,7 +79,7 @@ tools = [
                     "description": "a list of data to plot on the y axis.", 
                     "items": {
                         "description": "a value to show on the y axis.", 
-                        "type": "string"
+                        "type": "number"
                     }
                 }, 
                 "ylabel": {
