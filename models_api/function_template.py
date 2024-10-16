@@ -13,7 +13,7 @@ tools = [
                 },
                 "query": {
                     "type": "string",
-                    "description": """a SQL query. Note that the query should be in Google SQL syntax. Do not quote the column names. If the query does not contain all the primary key columns make sure it deduplicates records. The result should always be aggregated. It could be grouped by appropriate column(s). If the query doesn't deduplicate or aggregate it can return millions of records - limit the number of records returned in this case. Follow the same rules on deduplication and aggregation with or without group-by for any sub-queries. Avoid zero-division error in calculation. Sort results by suitable columns and use appropriate aliases where applicable. Use only the provided recipe for calculations."""
+                    "description": """a SQL query. Note that the query should be in Google SQL syntax. Do not quote the column names. Quote only the string and date literals in the query but do not escape the quotation marks using back-slashes. Avoid zero-division error in calculation. Sort results by suitable columns. Ensure these columns also appear in the select statement. Use appropriate aliases where applicable. Use only the provided recipe for calculations."""
                 }
             },
             "required": [
