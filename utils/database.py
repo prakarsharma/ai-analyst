@@ -16,7 +16,7 @@ schema["requested_tokens"] = [
     ["count","INT"]
 ]
 
-def connect_get_cursor(database:str='resources/ai-analyst.db'):
+def connect_get_cursor(database:str='resources/sao-chat-cost.db'):
     global connection_object, cursor_object
     connection_object = connect(database)
     cursor_object = connection_object.cursor()

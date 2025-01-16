@@ -45,7 +45,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ $CONDA_DEFAULT_ENV != ai-analyst-env ]]; then
-  conda run -n ai-analyst-env --cwd /home/jupyter/ai-analyst --live-stream streamlit run chat.py
+  conda run -n ai-analyst-env --cwd /home/jupyter/sao-chat --live-stream streamlit run chat.py
 else
-  streamlit run ~/ai-analyst/chat.py
+  streamlit run ~/sao-chat/chat.py
 fi

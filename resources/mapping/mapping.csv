@@ -1,4 +1,0 @@
-﻿fullname,type,description
-plan_id,INTEGER,Plan ID. A 7 digit integer. It refers to an optimization plan.
-dept_nbr,INTEGER,Department number. A double digit integer. It refers to a department.
-sbu,STRING,"SBU. Name of a business unit. There are a total of 6 SBUs - APPAREL, FOOD, CONS (consumables), HARDLINES, HOME and ETS. FOOD and CONS are also referred to together as FC while HARDLINES, HOME and ETS are together called GM (General Merchandize)."

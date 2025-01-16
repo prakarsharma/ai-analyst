@@ -55,11 +55,11 @@ class vectorDB:
     def n_docs(self) -> int:
         return self.db.count()
 
-    def upsert(self, documents:List[str], embeddings:Optional[List[List[float]]]=None, **metadata):
-        for i, doc in enumerate(documents):
-            kwargs = {"documents": [doc], "ids": [str(i)]}
+    def upsert(self, documents:Dict[str,str], embeddings:Optional[List[List[float]]]=None, **metadata):
+        for i, doc in documents.items():
+            kwargs = {"documents": [doc], "ids": [i]}
             if metadata:
-                kwargs.update({"ids":[f"{metadata['metadata']}.{str(i)}"]})
+                kwargs.update({"ids":[f"{metadata['metadata']}.{i}"]})
                 kwargs.update({"metadatas": [metadata]})
             if embeddings:
                 kwargs.update({"embeddings":[embeddings[i]]})
@@ -96,7 +96,7 @@ class vectorDB:
 
     def tabulate_results(query_result:Dict[str,List[List]]) -> pd.DataFrame:
         sim = 1 - pd.DataFrame(query_result["distances"][0], index=query_result["ids"][0], columns=["similarity"])
-        sim["node"] = sim.index.to_series().str.rstrip(".0123456789")
+        sim["node"] = sim.index.to_series().astype(str)
         return sim.reset_index(drop=False)
 
     def match(similarities:pd.DataFrame, return_matching:bool=True) -> pd.DataFrame:

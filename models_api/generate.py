@@ -5,6 +5,7 @@ from typing import List, Dict
 from models_api.gemini_api import chat_request
 from utils.secret import authentication
 from utils.config import conf
+from utils.logging import logger
 
 
 class llm:
@@ -14,6 +15,7 @@ class llm:
 
     def request(self, chat_messages:List[Dict], **kwargs) -> models.Response:
         payload:Dict = self.body.payload(chat_messages, **kwargs)
+        # logger.debug("payload | %s", payload)
         try:
             response:models.Response = request("POST", 
                                                conf["models"]["llm"]["gateway_url"], 

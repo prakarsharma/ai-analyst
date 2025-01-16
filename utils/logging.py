@@ -1,12 +1,12 @@
-from loguru import logger
+# from loguru import logger
 import logging
 from datetime import datetime
 
 
-def get_loguru_logger():
-    logger.remove()
-    logger.add("logs/pd_chat_{time}.log", format = "{time} | {message}")
-    return logger
+# def get_loguru_logger():
+    # logger.remove()
+    # logger.add("logs/pd_chat_{time}.log", format = "{time} | {message}")
+    # return logger
 
 
 def get_logger(debug_mode:bool=False):
@@ -26,3 +26,5 @@ def get_logger(debug_mode:bool=False):
     fHandler.setFormatter(logfile_format)
     logger.addHandler(fHandler)
     return logger
+
+logger = get_logger(debug_mode=True)

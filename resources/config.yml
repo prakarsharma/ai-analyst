@@ -4,48 +4,19 @@ models:
     llm: 
         name: &llm gemini-1.5-pro-001
         gateway_url: !concat [*endpoint,*llm,':generateContent']
-        generation_config:
-            maxOutputTokens: 2048
-            temperature: 0
-            topP: 1
     embedding:
         name: &embedding text-embedding-004
         gateway_url: !concat [*endpoint,*embedding,':predict']
 knowledge:
     documents:
-        examples: 'resources/examples.ttl'
+        graph: !read_json 'resources/knowledge/graph_v5.json'
     db:
         path: 'resources/db/vector/'
 bigquery:
-    combined:
-        table_id: &combined wmt-mtech-assortment-ml-prod.clearance_markdown_ml_prod.final_recommendations
-        description: !read_text 'resources/combined/recommendations_table.txt'
+    explainability:
+        table_id: &explainations wmt-mtech-assortment-ml-prod.dm_assortment_analytics_stg.expl_reason_categories
+        description: !read_text 'resources/explainability/explainability.txt'
         schema: !get_or_read_schema
-            csv: 'resources/combined/recommendations_table.csv'
-            table: *combined
-        primary_key: [plan_id, store, prime_item, gate_nbr, created_timestamp]
-    mapping:
-        table_id: &mapping wmt-mtech-assortment-ml-dev.clearance_markdown_ml_dev.plan_dept_sbu_mapping
-        description: !read_text 'resources/mapping/plan_dept_sbu_mapping.txt'
-        schema: !get_or_read_schema
-            csv: 'resources/mapping/mapping.csv'
-            table: *mapping
-        primary_key: [plan_id]
-    apparel:
-        table_id: &apparel wmt-mtech-assortment-ml-prod.clearance_md_report.apparel_cmd_wkly_kpi_table_rpt
-        description: !read_text 'resources/apparel/apparel_weekly_report.txt'
-        schema: !get_or_read_schema
-            csv: 'resources/apparel/apparel_weekly_report.csv'
-            table: *apparel
-        primary_key: [plan_id, store_nbr, prime_item_nbr, WM_YEAR_WK_NBR]
-    food: &fcgm
-        table_id: &food wmt-mtech-assortment-ml-prod.clearance_md_report.fcgm_cmd_wkly_kpi_table_rpt
-        description: !read_text 'resources/fcgm/fcgm_weekly_report.txt'
-        schema: !get_or_read_schema
-            csv: 'resources/fcgm/fcgm_weekly_report.csv'
-            table: *food
-        primary_key: [plan_id, store_nbr, prime_item_nbr, WM_YEAR_WK_NBR]
-    cons: *fcgm
-    hardlines: *fcgm
-    home: *fcgm
-    ets: *fcgm
+            csv: 'resources/explainability/explainability_limited.csv'
+            table: *explainations
+        primary_key: [Relay_Scenario_Name, jobId, planogram_or_store, rollup_id]

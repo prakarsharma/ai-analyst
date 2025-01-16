@@ -1,2 +1,0 @@
-Optimization plans weekly report. This table contains data on approved optimization plans for apparel business unit. The lowest grain of data is plan ID, store number, item number and week (time grain). All the mappings between the said columns are many-to-many.
-Use this table to find or compute the different relevant metrics.

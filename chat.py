@@ -10,19 +10,12 @@ st.set_page_config(
     layout="wide",
 )
 
-st.header("Chat with an AI Markdown analyst 🤖 💬")
+st.header("Chat with an AI Business Analyst 🤖 💬")
 if "messages" not in st.session_state.keys(): # Initialize the chat message history
     st.session_state.messages = [{"role": "assistant", "content": "Ask me a question on Markdown..."}]
 
 with st.expander("Sample questions", expanded=False):
     questions = """
-- How many departments are there in Apparel?
-- How does optimization work?
-- Find average STR for a plan 3964740 by gate and plan run.
-- How many item-store combinations for plan id 3823508 have 0 start inventory by gate?
-- Summary statistics for plan 3823508.
-- How much has markdown spend changed for plan 4000011?
-- Why has markdown spend changed for plan 4000011?
 """
     st.write(questions)
 

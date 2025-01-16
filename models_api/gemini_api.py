@@ -10,10 +10,11 @@ from utils.config import conf
 class chat_request:
     def __init__(self, system_prompt:str, **kwargs):
         self.system_prompt = system_prompt
-        self.functions = kwargs.get("functions")
+        self.functions = kwargs.get("functions", [])
         self.maxOutputTokens = kwargs.get("maxOutputTokens", 2048)
-        self.temperature = kwargs.get("temperature", 0.2)
-        self.topP = kwargs.get("topP", 1)
+        self.temperature = kwargs.get("temperature", 0)
+        self.topP = kwargs.get("topP", 0.95)
+        self.response_schema = kwargs.get("response_schema", [])
 
     def get_usage_metadata(response:models.Response):
         try:
@@ -30,13 +31,18 @@ class chat_request:
                         "text": self.system_prompt
                     }
                 ]
-            },
-            "generation_config": {
-                "maxOutputTokens": self.maxOutputTokens,
-                "temperature": self.temperature,
-                "topP": self.topP
             }
         }
+        generation_config = {
+            "responseModalities": ["TEXT"], 
+            "maxOutputTokens": self.maxOutputTokens, 
+            "temperature": self.temperature, 
+            "topP": self.topP
+        }
+        if self.response_schema:
+            generation_config["responseMimeType"] = "application/json"
+            generation_config["responseSchema"] = self.response_schema
+        model_params.update({"generation_config": generation_config})
         if self.functions:
             functions = {
                 "tools": [
@@ -61,6 +67,19 @@ class chat_request:
                 }
             }
             model_params.update(config)
+        # attached_files = kwargs.get("attached_files", [])
+        # if attached_files:
+            # files = []
+            # for file in attached_files:
+                # files += [
+                    # {
+                        # "fileData": {
+                            # "mimeType": "text/plain", 
+                            # "fileUri": file
+                        # }
+                    # }
+                # ]
+            # models_params["contents"]["parts"]
         return model_params
 
     def payload(self, chat_messages:List[Dict], **kwargs) -> Dict:
@@ -98,17 +117,27 @@ class chat_request:
 
 class chat_api_message:
     def __init__(self, user_prompt:str=None, warm_start:List[Dict]=[]):
-        self._messages = warm_start
+        self._messages = []
+        self._messages += warm_start
         if user_prompt:
             self.append("user", user_prompt)
 
     def template(role:Literal["user","model","function"], 
                  response:Union[str,Dict], 
                  mode:Literal["text","functionCall","functionResponse"]="text", 
-                 formatter:Optional[Callable[[str,str],str]]=lambda role, prompt: prompt) -> Dict:
+                 formatter:Optional[Callable[[str,str],str]]=lambda role, prompt: prompt, 
+                 attached_files:Optional[List]=[]) -> Dict:
         return {
             "role": role,
-            "parts": {mode: formatter(role, response)}
+            "parts": [{mode: formatter(role, response)}] +\
+            [
+                {
+                    "fileData": {
+                        "mimeType": "text/plain", 
+                        "fileUri": file
+                    }
+                } for file in attached_files
+            ]
         }
 
     def append(self, role:str, response:Union[str,Dict], **kwargs):
