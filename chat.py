@@ -10,9 +10,9 @@ st.set_page_config(
     layout="wide",
 )
 
-st.header("Chat with an AI Business Analyst 🤖 💬")
+st.header("Chat with an AI Data Analyst 🤖 💬")
 if "messages" not in st.session_state.keys(): # Initialize the chat message history
-    st.session_state.messages = [{"role": "assistant", "content": "Ask me a question on Markdown..."}]
+    st.session_state.messages = [{"role": "assistant", "content": "Ask me a question on SAO..."}]
 
 with st.expander("Sample questions", expanded=False):
     questions = """

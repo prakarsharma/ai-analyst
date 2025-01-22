@@ -1,16 +1,18 @@
 import os
 import shutil
+import json
 # import numpy as np
 # from rdflib import Graph
 from typing import List, Dict, Optional
 
 from models_api.vectorize import vectorDB
-from models_api.system_prompt import doc_expert
+from models_api.system_prompt import semantics_expert
 from models_api.gemini_api import chat_request, chat_api_message
 from models_api.generate import llm
 from utils.config import conf
 
 
+column_descriptions = {field["column_name"].lower(): field["description"]  for field in conf["bigquery"]["explainability"]["schema"]["schema"]}
 kg = conf["knowledge"]["documents"]["graph"]
 
 def load_graph_into_db(name="chunks"):
@@ -59,54 +61,188 @@ def traverse(node:Dict, ids:List, depth:int=1, max_depth:int=5, max_breadth:int=
     return chunks_
 
 
-def generate_relevant_chunks(prompt:str, min_items:int=0, max_items:int=10, attached_files:List[str]=["gs://p0s0a31/sao_chatbot/kg/optimization.txt"]):
+def analyze_and_retrieve_context(prompt:str, attached_files:List[str]=["gs://p0s0a31/sao_chatbot/kg/optimization_limited_v2.txt"]):
     message = chat_api_message()
     prompter = lambda role, user_prompt: f"Find out all the chunks of knowledge relevant to the user's query: {user_prompt}"
     message.append("user", prompt, formatter=prompter, attached_files=attached_files)
-    chunk_retriever_response = {
+    analyzer_retriever_response = {
         "type": "OBJECT",
         "properties": {
-            "context": {
+            "analysis": {
                 "type": "ARRAY",
-                "description": "a list of chunks",
+                "description": "a list of pairs of question and context",
                 "items": {
-                    "description": "a chunk characterized by a rank and text",
+                    "description": "a question along with the context on the question",
                     "type": "OBJECT",
                     "properties": {
-                        "no.": {
-                            "type": "INTEGER",
-                            "description": "rank based on relevance"
-                        },
-                        "relevant": {
+                        "question": {
                             "type": "STRING",
-                            "description": "the text of a relevant chunk as in the user provided document"
+                            "description": "a simple clarifying or knowledge-seeking question on the user's query"
                         },
-                        # "supporting": {
+                        "context": {
+                            "type": "ARRAY",
+                            "description": "a list of knowledge chunks relevant to a question",
+                            "items": {
+                                "type": "STRING",
+                                "description": "the text of the relevant chunk as in the user provided document"
+                            },
+                            # "minItems": "0",
+                            # "maxItems": "5"
+                        },
+                        # "summary": {
+                            # "type": "STRING",
+                            # "description": "a brief summary of the context covering the highlights from the relevant chunks"
+                        # },
+                        # "data": {
                             # "type": "ARRAY",
-                            # "description": "a list of chunks which contain any supporting information on the relevant chunk",
+                            # "description": "a list of data relevant to the question",
                             # "items": {
                                 # "type": "STRING",
-                                # "description": "the text of a supporting chunk as in the user provided document"
+                                # "description": "the name of a field as in the user provided schema document"
                             # },
                             # "minItems": "0",
                             # "maxItems": "5"
                         # }
                     },
                     "required": [
-                        "no.",
-                        "relevant",
-                        # "supporting"
+                        "question", 
+                        "context"
+                        # summary
+                        # "data"
                     ]
                 },
-                "minItems": str(min_items),
-                "maxItems": str(max_items)
+                # "minItems": "1",
+                # "maxItems": "5"
             }
         },
         "required": [
-            "context"
+            "analysis"
         ]
     }
-    retriever = llm(doc_expert, response_schema=chunk_retriever_response)
-    response_object = retriever.request(message.messages)
+    # chunk_retriever_response = {
+        # "type": "OBJECT",
+        # "properties": {
+            # "context": {
+                # "type": "ARRAY",
+                # "description": "a list of relevant chunks of knowledge",
+                # "items": {
+                    # "type": "STRING",
+                    # "description": "the text of a relevant knowledge chunk as in the user provided document"
+                # }
+                # "minItems": "0",
+                # "maxItems": "10"
+            # }
+        # },
+        # "required": [
+            # "context"
+        # ]
+    # }
+    analyzer_retriever = llm(semantics_expert)
+    response_object = analyzer_retriever.request(message.messages, response_schema=analyzer_retriever_response)
     response = chat_request.parse_response(response_object)
-    return response["response"]
+    for i, part in enumerate(message.messages[-1]["parts"]):
+        if "fileData" in part:
+            message.messages[-1]["parts"].pop(i)
+    message.append("model", **response)
+    message.append("user", "Consider the relevant knowledge found in the previous step. Find all corresponding relevant columns from the attached schema document.", attached_files=["gs://p0s0a31/sao_chatbot/kg/schema_limited.txt"])
+    # data_field_response = {
+        # "type": "OBJECT",
+        # "properties": {
+            # "data": {
+                # "type": "ARRAY",
+                # "description": "a list of data field names and their description",
+                # "items": {
+                    # "description": "a question along with the context on the question",
+                    # "type": "OBJECT",
+                    # "properties": {
+                        # "name": {
+                            # "type": "STRING",
+                            # "description": "the name of a relevant data field"
+                        # },
+                        # "description": {
+                            # "type": "STRING",
+                            # "description": "the description of the relevant data field as in the user provided schema document",
+                        # }
+                    # },
+                    # "required": [
+                        # "name", 
+                        # "description"
+                    # ]
+                # },
+                # "minItems": "0",
+                # "maxItems": "5"
+            # }
+        # },
+        # "required": [
+            # "data"
+        # ]
+    # }
+    column_name_response = analyzer_retriever_response.copy()
+    columns = {
+        "columns": {
+            "type": "ARRAY",
+            "description": "a list of columns relevant to a question and context",
+            "items": {
+                "type": "STRING",
+                "description": "the name of a relevant column as in the user provided schema document"
+            },
+        }
+    }
+    column_name_response["properties"]["analysis"]["items"]["properties"].update(columns)
+    column_name_response["properties"]["analysis"]["items"]["required"].append("columns")
+    # data_response = {
+        # "type": "OBJECT",
+        # "properties": {
+            # "data": {
+                # "type": "ARRAY",
+                # "description": "a list of relevant data field names",
+                # "items": {
+                    # "type": "STRING",
+                    # "description": "the name of a relevant data field as in the user provided schema document"
+                # }
+                # "minItems": "0",
+                # "maxItems": "10"
+            # }
+        # },
+        # "required": [
+            # "data"
+        # ]
+    # }
+    response_object = analyzer_retriever.request(message.messages, response_schema=column_name_response)
+    response = chat_request.parse_response(response_object)
+    return [
+        {
+            "Follow-up question": field["question"], 
+            "Context": field["context"], 
+            "Relevant columns": {
+                name: column_descriptions[name.lower()] for name in field["columns"]
+            }
+        } for field in json.loads(response["response"])["analysis"]
+    ]
+
+def generate_query_analysis(prompt:str, min_items:int=0, max_items:int=5):
+    message = chat_api_message()
+    prompter = lambda role, user_prompt: f"Break down the user's query into simpler questions: {user_prompt}"
+    message.append("user", prompt, formatter=prompter)
+    query_analyzer_response = {
+        "type": "OBJECT",
+        "properties": {
+            "questions": {
+                "type": "ARRAY",
+                "description": "a list of questions posed in order to extract more context on the user's query",
+                "items": {
+                    "type": "STRING",
+                    "description": "the text of a clarifying or knowledge-seeking question"
+                },
+                "minItems": str(min_items),
+                "maxItems": str(max_items)
+            },
+        },
+        "required": [
+            "questions"
+        ]
+    }
+    analyzer = llm(analysis_expert, response_schema=query_analyzer_response)
+    response_object = analyzer.request(message.messages)
+    response = chat_request.parse_response(response_object)
+    return json.loads(response["response"])

@@ -6,7 +6,7 @@ from functools import lru_cache
 
 from utils.config import conf
 from utils.utils import bigquery_job
-from app.knowledge import generate_relevant_chunks
+# from app.knowledge import generate_relevant_chunks
 
 
 reflection = False
@@ -29,7 +29,18 @@ def fetch_data(table_id:str, query:str, **kwargs) -> List[Dict[str,str]]:
     reflection = not reflection
     if reflection:
         return {
-            "warning": "Verify if the generated query is correct. Reconsider the primary-key columns of the table and ensure the query aggregated or deduplicates columns appropriately. Make corrections, if any, and call 'fetch_data' again."
+            "warning": """
+Verify that the generated query is correct. Reconsider the following rules you should follow to generate correct SQL.
+
+Aggregate depending on the grain of data.
+Deduplicate any string or date type columns in the select statement if there is no aggregation.
+Follow the rule of ratio of averages if a metric is a ratio.
+Round to 2 decimal places if the expected result is float type.
+Avoid zero-division error.
+Use only the provided definitions.
+
+Calculate all the required metrics. Make corrections, if any, and call 'fetch_data' again.
+"""
         }
     result = bigquery_job.run(query)
     reflection = "error" in result
@@ -139,12 +150,12 @@ def scratch_pad(thoughts:str):
     """
     pass
 
-def get_more_context(follow_up_questions:List[str]):
-    """Retrieve more context on the user's query from a knowledge base on business processes.
+# def get_more_context(follow_up_questions:List[str]):
+    # """Retrieve more context on the user's query from a knowledge base on business processes.
     
-    Returns
-    -------
-    dict
-        Retrieved context for each follow-up question organized into chunks of knowledge and ordered.
-    """
-    return {prompt: generate_relevant_chunks(prompt, max_items=5) for prompt in follow_up_questions}
+    # Returns
+    # -------
+    # dict
+        # Retrieved context for each follow-up question organized into chunks of knowledge and ordered.
+    # """
+    # return {prompt: generate_relevant_chunks(prompt) for prompt in follow_up_questions}

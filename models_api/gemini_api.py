@@ -14,7 +14,6 @@ class chat_request:
         self.maxOutputTokens = kwargs.get("maxOutputTokens", 2048)
         self.temperature = kwargs.get("temperature", 0)
         self.topP = kwargs.get("topP", 0.95)
-        self.response_schema = kwargs.get("response_schema", [])
 
     def get_usage_metadata(response:models.Response):
         try:
@@ -39,10 +38,26 @@ class chat_request:
             "temperature": self.temperature, 
             "topP": self.topP
         }
-        if self.response_schema:
-            generation_config["responseMimeType"] = "application/json"
-            generation_config["responseSchema"] = self.response_schema
         model_params.update({"generation_config": generation_config})
+        safety_setings = [
+            {
+                "category": "HARM_CATEGORY_HARASSMENT", 
+                "threshold": "BLOCK_NONE"
+            },
+            {
+                "category": "HARM_CATEGORY_HATE_SPEECH", 
+                "threshold": "BLOCK_NONE"
+            },
+            {
+                "category": "HARM_CATEGORY_DANGEROUS_CONTENT", 
+                "threshold": "BLOCK_NONE"
+            },
+            {
+                "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", 
+                "threshold": "BLOCK_NONE"
+            }
+        ]
+        model_params.update({"safetySettings": safety_setings})
         if self.functions:
             functions = {
                 "tools": [
@@ -67,6 +82,13 @@ class chat_request:
                 }
             }
             model_params.update(config)
+        response_schema = kwargs.get("response_schema", [])
+        if response_schema:
+            generation_config = {
+                "responseMimeType": "application/json",
+                "responseSchema": response_schema
+            }
+            model_params["generation_config"].update(generation_config)
         # attached_files = kwargs.get("attached_files", [])
         # if attached_files:
             # files = []

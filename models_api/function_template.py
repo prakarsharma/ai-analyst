@@ -13,7 +13,23 @@ tools = [
                 },
                 "query": {
                     "type": "string",
-                    "description": """a SQL query. Note that the query should be in Google SQL syntax. Do not quote the column names. Quote only the string and date literals in the query but do not escape the quotation marks using back-slashes. Take into account the primary-key columns of the table. Aggregate or deduplicate columns as necessary. Avoid zero-division error in calculation. Sort results by suitable columns. Ensure these columns also appear in the select statement. Use appropriate aliases where applicable. Use only the provided recipe for calculations."""
+                    "description": """
+SQL query. Note that the query should be in Google SQL syntax.
+General rules to generate the correct SQL:
+Do not quote the column names. Quote only the string and date literals in the query. Do not escape using back-slashes the quotation marks.
+Sort results by suitable columns and ensure these columns also appear in the select statement.
+Use appropriate aliases where applicable.
+
+Certain data, called metrics, are not available in a table. Metrics have to be computed using the data in the table and simple mathematical operations. Certain metrics may only be defined at a level of aggregation. It depends on the grain of data, i.e., the primary keys. E.g., a metric like, 'duration of sale in days' can only be calculated upon aggrgation if the data is daily. Metrics can be aggregated like other data in the table. An exception to this rule is metrics which are a ratio of two datum. E.g., 'revenue' is a metric defined as 'units times price' - the average revenue is average of revenue - but 'percentage units sold', defined as 'units sold by stock' - the average percentage units sold is sum of units sold by sum of stock. This called the ratio of averages rule.
+
+Rules for calculations to generate the correct SQL:
+Aggregate depending on the grain of data.
+Deduplicate any string or date type columns in the select statement if there is no aggregation.
+Follow the rule of ratio of averages if a metric is a ratio.
+Round to 2 decimal places if the expected result is float type.
+Avoid zero-division error.
+Use only the provided definitions.
+"""
                 }
             },
             "required": [
@@ -140,4 +156,4 @@ tools = [
             # ],
         # }
     # }
-# ]
+]

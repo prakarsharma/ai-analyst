@@ -1,7 +1,7 @@
 import pandas as pd
 from typing import Union, Dict, Literal
 
-from models_api.system_prompt import analyst
+from models_api.system_prompt import data_analyst
 from models_api.function_template import tools
 from models_api.gemini_api import chat_request, chat_api_message
 from models_api.generate import llm
@@ -9,7 +9,7 @@ from models_api.vectorize import vectorDB
 from utils.cert import load_wmt_ca_bundle
 from utils.logging import logger
 from utils.utils import clean
-from app.knowledge import generate_relevant_chunks
+from app.knowledge import analyze_and_retrieve_context
 from app.history import history
 from app import functions
 
@@ -17,7 +17,7 @@ from app import functions
 class chatbot:
     def __init__(self, debug_mode=False, safe_mode=False):
         load_wmt_ca_bundle()
-        self.llm = llm(analyst, functions=tools)
+        self.data_analyst = llm(data_analyst, functions=tools)
         self.chat = chat_api_message(warm_start=history)
         # self.chunks_db = vectorDB(name="chunks")
 
@@ -25,11 +25,9 @@ class chatbot:
         self.answer_object = {}
         try:
             logger.info("prompt | %s", prompt)
-            # relevant_chunks = get_relevant_chunks(prompt, self.chunks_db, top_n=3, max_depth=2, max_breadth=4)
-            relevant_chunks = generate_relevant_chunks(prompt)
-            logger.info("relevant chunks | %s", relevant_chunks)
-            # prompter = lambda role, user_prompt: f"Question: {user_prompt}\n\nContext:\n{relevant_chunks}\n\n{scratch_pad_prompt}"
-            prompter = lambda role, user_prompt: f"Question: {user_prompt}\n\nContext:\n{relevant_chunks}"
+            knowledge = analyze_and_retrieve_context(prompt)
+            logger.info("knowledge | %s", knowledge)
+            prompter = lambda role, user_prompt: f"User query: {user_prompt}\n\nAnalysis and context:\n{knowledge}"
             self.chat.append("user", prompt, formatter=prompter)
             while "EOS" not in self.answer_object:
                 self.generate_response()
@@ -42,7 +40,7 @@ class chatbot:
 
     def generate_response(self, **kwargs):
         # scratch_pad = []
-        response_object = self.llm.request(self.chat.messages, **kwargs)
+        response_object = self.data_analyst.request(self.chat.messages, **kwargs)
         logger.debug("response object | %s", response_object.json())
         response = chat_request.parse_response(response_object)
         logger.info("response | %s", response)
