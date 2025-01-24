@@ -16,8 +16,10 @@ class chat_request:
         self.topP = kwargs.get("topP", 0.95)
 
     def get_usage_metadata(response:models.Response):
+        counters = ["promptTokenCount", "candidatesTokenCount", "totalTokenCount"]
         try:
-            return response.json()["usageMetadata"]
+            usage_metadata = response.json()["usageMetadata"]
+            return {counter: usage_metadata[counter] for counter in counters}
         except KeyError:
             raise ConnectionError("!API request failure!")
 

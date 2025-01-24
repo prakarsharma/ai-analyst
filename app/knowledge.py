@@ -86,57 +86,19 @@ def analyze_and_retrieve_context(prompt:str, attached_files:List[str]=["gs://p0s
                                 "type": "STRING",
                                 "description": "the text of the relevant chunk as in the user provided document"
                             },
-                            # "minItems": "0",
-                            # "maxItems": "5"
                         },
-                        # "summary": {
-                            # "type": "STRING",
-                            # "description": "a brief summary of the context covering the highlights from the relevant chunks"
-                        # },
-                        # "data": {
-                            # "type": "ARRAY",
-                            # "description": "a list of data relevant to the question",
-                            # "items": {
-                                # "type": "STRING",
-                                # "description": "the name of a field as in the user provided schema document"
-                            # },
-                            # "minItems": "0",
-                            # "maxItems": "5"
-                        # }
                     },
                     "required": [
                         "question", 
                         "context"
-                        # summary
-                        # "data"
                     ]
                 },
-                # "minItems": "1",
-                # "maxItems": "5"
             }
         },
         "required": [
             "analysis"
         ]
     }
-    # chunk_retriever_response = {
-        # "type": "OBJECT",
-        # "properties": {
-            # "context": {
-                # "type": "ARRAY",
-                # "description": "a list of relevant chunks of knowledge",
-                # "items": {
-                    # "type": "STRING",
-                    # "description": "the text of a relevant knowledge chunk as in the user provided document"
-                # }
-                # "minItems": "0",
-                # "maxItems": "10"
-            # }
-        # },
-        # "required": [
-            # "context"
-        # ]
-    # }
     analyzer_retriever = llm(semantics_expert)
     response_object = analyzer_retriever.request(message.messages, response_schema=analyzer_retriever_response)
     response = chat_request.parse_response(response_object)
@@ -145,38 +107,6 @@ def analyze_and_retrieve_context(prompt:str, attached_files:List[str]=["gs://p0s
             message.messages[-1]["parts"].pop(i)
     message.append("model", **response)
     message.append("user", "Consider the relevant knowledge found in the previous step. Find all corresponding relevant columns from the attached schema document.", attached_files=["gs://p0s0a31/sao_chatbot/kg/schema_limited.txt"])
-    # data_field_response = {
-        # "type": "OBJECT",
-        # "properties": {
-            # "data": {
-                # "type": "ARRAY",
-                # "description": "a list of data field names and their description",
-                # "items": {
-                    # "description": "a question along with the context on the question",
-                    # "type": "OBJECT",
-                    # "properties": {
-                        # "name": {
-                            # "type": "STRING",
-                            # "description": "the name of a relevant data field"
-                        # },
-                        # "description": {
-                            # "type": "STRING",
-                            # "description": "the description of the relevant data field as in the user provided schema document",
-                        # }
-                    # },
-                    # "required": [
-                        # "name", 
-                        # "description"
-                    # ]
-                # },
-                # "minItems": "0",
-                # "maxItems": "5"
-            # }
-        # },
-        # "required": [
-            # "data"
-        # ]
-    # }
     column_name_response = analyzer_retriever_response.copy()
     columns = {
         "columns": {
@@ -190,24 +120,6 @@ def analyze_and_retrieve_context(prompt:str, attached_files:List[str]=["gs://p0s
     }
     column_name_response["properties"]["analysis"]["items"]["properties"].update(columns)
     column_name_response["properties"]["analysis"]["items"]["required"].append("columns")
-    # data_response = {
-        # "type": "OBJECT",
-        # "properties": {
-            # "data": {
-                # "type": "ARRAY",
-                # "description": "a list of relevant data field names",
-                # "items": {
-                    # "type": "STRING",
-                    # "description": "the name of a relevant data field as in the user provided schema document"
-                # }
-                # "minItems": "0",
-                # "maxItems": "10"
-            # }
-        # },
-        # "required": [
-            # "data"
-        # ]
-    # }
     response_object = analyzer_retriever.request(message.messages, response_schema=column_name_response)
     response = chat_request.parse_response(response_object)
     return [
@@ -219,30 +131,3 @@ def analyze_and_retrieve_context(prompt:str, attached_files:List[str]=["gs://p0s
             }
         } for field in json.loads(response["response"])["analysis"]
     ]
-
-def generate_query_analysis(prompt:str, min_items:int=0, max_items:int=5):
-    message = chat_api_message()
-    prompter = lambda role, user_prompt: f"Break down the user's query into simpler questions: {user_prompt}"
-    message.append("user", prompt, formatter=prompter)
-    query_analyzer_response = {
-        "type": "OBJECT",
-        "properties": {
-            "questions": {
-                "type": "ARRAY",
-                "description": "a list of questions posed in order to extract more context on the user's query",
-                "items": {
-                    "type": "STRING",
-                    "description": "the text of a clarifying or knowledge-seeking question"
-                },
-                "minItems": str(min_items),
-                "maxItems": str(max_items)
-            },
-        },
-        "required": [
-            "questions"
-        ]
-    }
-    analyzer = llm(analysis_expert, response_schema=query_analyzer_response)
-    response_object = analyzer.request(message.messages)
-    response = chat_request.parse_response(response_object)
-    return json.loads(response["response"])
