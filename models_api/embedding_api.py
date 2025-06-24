@@ -3,6 +3,7 @@ from requests import models
 
 
 class embedding_request:
+    @staticmethod
     def json(document:str, 
              task:Literal["SEMANTIC_SIMILARITY", 
                           "RETRIEVAL_QUERY", 
@@ -18,6 +19,7 @@ class embedding_request:
             ]
         }
 
+    @staticmethod
     def parse_response(response_object:models.Response) -> Dict:
         if "error" in response_object.json():
             raise ValueError("!bad gateway response!")

@@ -1,161 +1,208 @@
+import json
 import pandas as pd
-from matplotlib import pyplot as plt
 from io import BytesIO
+from matplotlib import pyplot as plt
 from typing import List, Dict, Optional
 from functools import lru_cache
 
 from utils.config import conf
 from utils.utils import bigquery_job
-# from app.knowledge import generate_relevant_chunks
+from utils.logging import logger
 
 
-reflection = False
+class Tools:
+    def __init__(self, use_validation:bool=True, use_reminder:bool=True):
+        """
+        Initialize the Tools class with default values.
+        """
+        self.use_validation = use_validation
+        if self.use_validation:
+            logger.info("Validating queries at generation")
+        else:
+            logger.info("Suspending validation at query generation")
+        self.is_validated = False
+        self.use_reminder = use_reminder
+        if self.use_reminder:
+            logger.info("Sending a reminder at query generation")
+        else:
+            logger.info("Disabling reminders at query generation")
 
-def fetch_data(table_id:str, query:str, **kwargs) -> List[Dict[str,str]]:
-    """
-    Fetch data from BigQuery table and/ or find or compute the different relevant metrics.
-    
-    Returns
-    -------
-    dict
-        Records returned from query.
-    """
-    metadata = conf["bigquery"]["explainability"]
-    if table_id != metadata["table_id"]:
+    def reset_validation_state(self):
+        """
+        Reset the validation state of the Tools class.
+        This function is used to reset the validation state of the Tools class.
+        """
+        self.is_validated = False
+
+    def submit_query_plan(self, details:str, **kwargs) -> Dict[str, str]:
+        """
+        This function submits a query plan for validation.
+        :param plan: A query plan to be submitted for validation.
+        :return: A dictionary containing the status of the submission.
+        """
+        logger.info("Using tool 'submit_query_plan' with arguments:\n details = {}", details)
+        if details:
+            self.is_validated = True
         return {
-            "error": f"'{table_id}' is not the correct table ID. Call 'get_bigquery_table' to get the correct table ID."
+            "status": "validated",
+            "message": "Query plan submitted successfully and validated. Call 'fetch_data' with the table IDs and SQL query based on this plan to fetch data.",
         }
-    global reflection
-    reflection = not reflection
-    if reflection:
-        return {
-            "warning": """
-Verify that the generated query is correct. Reconsider the following rules you should follow to generate correct SQL.
 
-Aggregate depending on the grain of data.
-Deduplicate any string or date type columns in the select statement if there is no aggregation.
-Follow the rule of ratio of averages if a metric is a ratio.
-Round to 2 decimal places if the expected result is float type.
-Avoid zero-division error.
-Use only the provided definitions.
+    def fetch_data(self, table_id:List[str], query:str, **kwargs) -> List[Dict[str,str]]:
+        """
+        This function fetches data from a BigQuery table using the provided query.
+        Before you call this function submit a query plan to the user for validation. You can access data only after your plan is validated. Call 'submit_query_plan' to submit your query plan for validation. However, if 'submit_query_plan' is not available, skip validation.
+        Also ensure that you have the table IDs before you call this function. Call 'get_bigquery_table' to get the table IDs.
+        :param table_id: The IDs of the BigQuery tables to query.
+        :param query: The SQL query to execute on the BigQuery table.
+        :return: A list of dictionaries containing the queried data or an error message.
+        :raises ValueError: If the table ID does not match the expected table ID in the configuration.
+        """
+        logger.info("Using tool 'fetch_data' with arguments:\n table_id = {},\n query = {}", "\n".join(table_id), query)
+        if self.use_validation and not self.is_validated:
+            return [
+                {
+                    "error": "You must submit a query plan and get it validated before you can call this function. Call 'submit_query_plan' to submit your query plan for validation."
+                }
+            ]
+        metadata = [metadata["table_id"] for table, metadata in conf["bigquery"].items()]
+        if not all([table in metadata for table in table_id]):
+            return [
+                {
+                "error": f"'{table_id}' is not the correct table ID. Call 'get_bigquery_table' to get the correct table ID."
+                }
+            ]
+        reminder = {
+            "warning": """Verify that the generated query is correct. Reconsider the following rules you should follow to generate correct SQL.
 
-Calculate all the required metrics. Make corrections, if any, and call 'fetch_data' again.
-"""
+            1. Aggregate depending on the grain of data.
+            2. Deduplicate any string or date type columns in the select statement if there is no aggregation.
+            3. Follow the rule of ratio of averages if a metric is a ratio.
+            4. Round to 2 decimal places if the expected result is float type.
+            5. Avoid zero-division error.
+            6. Use only the provided metrics definitions.
+
+            Calculate all the required metrics. Make corrections, if any, and call 'fetch_data' again."""
         }
-    result = bigquery_job.run(query)
-    reflection = "error" in result
-    return result
+        results = bigquery_job.run(query)
+        for item in results:
+            if "error" in item:
+                if self.use_reminder:
+                    item.update(reminder)
+                    return results
+        self.reset_validation_state()
+        return results
 
-@lru_cache
-def get_bigquery_table(**kwargs) -> Dict:
-    """
-    Get the bigquery table ID and related metadata.
-    
-    Returns
-    -------
-    dict
-        Table ID, data description, table schema and primary keys.
-    """
-    metadata = conf["bigquery"]["explainability"]
-    return metadata
+    # @lru_cache
+    def get_bigquery_table(self, **kwargs) -> Dict:
+        """
+        This function gets the bigquery table IDs and related metadata.
+        :return: A dictionary containing the BigQuery table IDs and metadata.
+        """
+        logger.info("Using tool 'get_bigquery_table'")
+        metadata = conf["bigquery"]
+        return metadata
 
-# @lru_cache
-# def get_dept_sbu_mapping(sbu:Optional[str]=None, 
-                         # dept:Optional[int]=None, 
-                         # mapping_table:str=pd.read_csv("resources/combined/dept_SBU_mapping.csv"), **kwargs) -> List[Dict]:
-    # """
-    # Get the department name and number from SBU name or department name and SBU name from department number.
-    
-    # Returns
-    # -------
-    # dict
-        # A list of department names and numbers or SBU names.
-    # """
-    # SBUs = mapping_table["SBU"].unique()
-    # Departments = mapping_table["Dept_nbr"].astype(str).unique()
-    # if sbu:
-        # if sbu.upper() not in SBUs:
+    # @lru_cache
+    # def get_dept_sbu_mapping(sbu:Optional[str]=None, 
+                            # dept:Optional[int]=None, 
+                            # mapping_table:str=pd.read_csv("resources/combined/dept_SBU_mapping.csv"), **kwargs) -> List[Dict]:
+        # """
+        # Get the department name and number from SBU name or department name and SBU name from department number.
+        
+        # Returns
+        # -------
+        # dict
+            # A list of department names and numbers or SBU names.
+        # """
+        # SBUs = mapping_table["SBU"].unique()
+        # Departments = mapping_table["Dept_nbr"].astype(str).unique()
+        # if sbu:
+            # if sbu.upper() not in SBUs:
+                # return {
+                    # "error": f"sbu not found in the list of valid SBU names: {','.join(SBUs)}"
+                # }
+            # mapping = mapping_table.loc[mapping_table["SBU"] == sbu.upper(),["Dept_nbr","Dept_desc"]]
+        # elif dept:
+            # if str(dept) not in Departments:
+                # return {
+                    # "error": f"dept not found in the list of valid dept numbers: {','.join(Departments)}"
+                # }        
+            # mapping = mapping_table.loc[mapping_table["Dept_nbr"] == dept,["Dept_desc","SBU"]]
+        # else:
             # return {
-                # "error": f"sbu not found in the list of valid SBU names: {','.join(SBUs)}"
-            # }
-        # mapping = mapping_table.loc[mapping_table["SBU"] == sbu.upper(),["Dept_nbr","Dept_desc"]]
-    # elif dept:
-        # if str(dept) not in Departments:
-            # return {
-                # "error": f"dept not found in the list of valid dept numbers: {','.join(Departments)}"
-            # }        
-        # mapping = mapping_table.loc[mapping_table["Dept_nbr"] == dept,["Dept_desc","SBU"]]
-    # else:
-        # return {
-                # "error": "neither sbu or dept was provided. Provide one of them to get mapping."
-            # }
-    # return mapping.to_dict(orient="records")
+                    # "error": "neither sbu or dept was provided. Provide one of them to get mapping."
+                # }
+        # return mapping.to_dict(orient="records")
 
-def table(query:str, records:List[Dict]) -> pd.DataFrame:
-    """
-    Make a table from the records returned by a BigQuery job. This function uses a pandas DataFrame as the choice of tabular data structure.
-    
-    Returns
-    -------
-    DataFrame
-        A data frame of the queried records.
-    """
-    return pd.DataFrame(records)
+    def table(self, query:str, records:List[Dict]) -> pd.DataFrame:
+        """
+        This function makes a table from the records returned by a BigQuery job. This function uses a pandas DataFrame as the choice of tabular data structure.
+        :param query: The SQL query that was executed to fetch the records.
+        :param records: A list of dictionaries containing the records fetched from the BigQuery table.
+        :return: A pandas DataFrame containing the records.
+        """
+        logger.info("Using tool 'table' with arguments:\n query = {},\n records = {}", query, json.dumps(records, indent=4))
+        return pd.DataFrame(records)
 
-def plot(title:str, x:List, xlabel:str, y:Optional[List]=None, ylabel:str="", plot_type:str="scatter", figsize:List[int]=[8,5]):
-    """
-    Make a plot (chart) from data provided. This function saves a plot image and does not return anything.
-    
-    Returns
-    -------
-        None
-    """
-    buf = BytesIO()
-    df = pd.Series(x, name=xlabel).to_frame()
-    fig = plt.figure(figsize=figsize)
-    plt.suptitle(title)
-    plt.xlabel(xlabel)
-    if y is not None:
-        y_series = pd.Series(y).astype(float)
-        if ylabel:
-            df[ylabel] = y_series
-            plt.ylabel(ylabel)
-    df.sort_values(by=xlabel, ascending=True, inplace=True)
-    try:
-        if plot_type == "line":
-            plt.plot(df[xlabel], df[ylabel])
-        if plot_type == "scatter":
-            plt.scatter(df[xlabel], df[ylabel])
-        if plot_type == "bar":
-            plt.bar(df[xlabel], df[ylabel])
-        if plot_type == "boxplot":
-            plt.boxplot(df[xlabel])
-        if plot_type == "histogram":
-            plt.hist(df[xlabel])
-        if plot_type == "pie":
-            plt.pie(df[xlabel])
-        fig.savefig(buf, format="png")
-        return buf
-    except KeyError as err:
-        return {
-            "error": "provide both x and y to make the plot: either one of the axes is missing or can't be computed"
-        }
+    def plot(self, 
+             title:str, 
+             x:List, 
+             xlabel:str, 
+             y:Optional[List]=None, 
+             ylabel:str="", 
+             plot_type:str="scatter", 
+             figsize:tuple[float, float]=(10,6)):
+        """
+        This function generates a plot based on the provided data and parameters. It uses matplotlib to create the plot.
+        It supports various plot types such as line, scatter, bar, boxplot, histogram, and pie chart.
+        :param title: The title of the plot.
+        :param x: A list of data to plot on the x-axis.
+        :param xlabel: A suitable name for the data on the x-axis.
+        :param y: A list of data to plot on the y-axis (optional).
+        :param ylabel: A suitable name for the data on the y-axis (optional).
+        :param plot_type: The type of plot to generate (e.g., "line", "scatter", "bar", "boxplot", "histogram", "pie").
+        :param figsize: The size of the figure (default is (10, 6)).
+        :return: A BytesIO object containing the plot image.
+        """
+        logger.info("Using tool 'plot' with arguments:\n title = {},\n x = {},\n xlabel = {},\n y = {},\n ylabel = {},\n plot_type = {},\n figsize = {}", title, x, xlabel, y, ylabel, plot_type, figsize)
+        buf = BytesIO()
+        df = pd.Series(x, name=xlabel).to_frame()
+        fig = plt.figure(figsize=figsize)
+        plt.suptitle(title)
+        plt.xlabel(xlabel)
+        if y is not None:
+            y_series = pd.Series(y).astype(float)
+            if ylabel:
+                df[ylabel] = y_series
+                plt.ylabel(ylabel)
+        df.sort_values(by=xlabel, ascending=True, inplace=True)
+        try:
+            if plot_type == "line":
+                plt.plot(df[xlabel], df[ylabel])
+            if plot_type == "scatter":
+                plt.scatter(df[xlabel], df[ylabel])
+            if plot_type == "bar":
+                plt.bar(df[xlabel], df[ylabel])
+            if plot_type == "boxplot":
+                plt.boxplot(df[xlabel])
+            if plot_type == "histogram":
+                plt.hist(df[xlabel])
+            if plot_type == "pie":
+                plt.pie(df[xlabel])
+            fig.savefig(buf, format="png")
+            return buf
+        except KeyError as err:
+            return {
+                "error": "provide both x and y to make the plot: either one of the axes is missing or can't be computed"
+            }
 
-def scratch_pad(thoughts:str):
-    """Use a scratch pad to put down thoughts and plan.
-    
-    Returns
-    -------
-        None
-    """
-    pass
-
-# def get_more_context(follow_up_questions:List[str]):
-    # """Retrieve more context on the user's query from a knowledge base on business processes.
-    
-    # Returns
-    # -------
-    # dict
-        # Retrieved context for each follow-up question organized into chunks of knowledge and ordered.
-    # """
-    # return {prompt: generate_relevant_chunks(prompt) for prompt in follow_up_questions}
+    def EOS(self, message:str) -> str:
+        """
+        This function indicates the end of response generation.
+        Call this function when you want to interact with the user. You can return your final response to the user or use this function to ask a clarifying question.
+        :param message: The message to return to the user.
+        :return: The message to return to the user.
+        """
+        logger.info("Using tool 'EOS' with arguments:\n message = {}", message)
+        return message

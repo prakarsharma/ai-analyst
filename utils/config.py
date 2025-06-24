@@ -9,7 +9,7 @@ from utils.utils import bigquery_job
 
 def get_env_var(loader, node) -> str:
     name = loader.construct_scalar(node)
-    return os.environ.get(name)
+    return os.environ.get(name, "")
 
 def concat(loader, node) -> str:
     seq = loader.construct_sequence(node)
@@ -32,7 +32,7 @@ def read_json(loader, node) -> Union[List,Dict]:
         contents = json.loads(f.read())
     return contents
 
-def get_or_read_schema(loader, node) -> List[Dict[str,str]]:
+def get_or_read_schema(loader, node) -> Dict:
     kwargs = loader.construct_mapping(node)
     csv = kwargs.get("csv")
     table_id = kwargs.get("table_id")
@@ -46,24 +46,26 @@ def get_or_read_schema(loader, node) -> List[Dict[str,str]]:
             }
             return {
                 "schema": [parse_schema(row) for i, row in dataframe.iterrows()]
-            }
+                }
         except FileNotFoundError:
             pass
     if table_id:
         project_id, dataset, table = kwargs["table_id"].split(".")
         query = f"""
-SELECT
-    column_name,
-    data_type,
-    description
-FROM
-    `{project_id}.{dataset}.INFORMATION_SCHEMA.COLUMN_FIELD_PATHS`
-WHERE
-    table_name='{table}'
-"""
+                SELECT
+                    column_name,
+                    data_type,
+                    description
+                FROM
+                    `{project_id}.{dataset}.INFORMATION_SCHEMA.COLUMN_FIELD_PATHS`
+                WHERE
+                    table_name='{table}'
+                """
         return {
             "schema": bigquery_job.run(query)
-        }
+            }
+    else:
+        raise NotImplementedError("Either csv or table_id must be provided to get or read schema.")
 
 # register the tag handlers
 yaml.SafeLoader.add_constructor(tag='!get_env_var', constructor=get_env_var)

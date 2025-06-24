@@ -1,30 +1,23 @@
-# from loguru import logger
-import logging
-from datetime import datetime
+import os
+import sys
+# import logging
+from loguru import logger
 
+from utils.config import conf
 
-# def get_loguru_logger():
-    # logger.remove()
-    # logger.add("logs/pd_chat_{time}.log", format = "{time} | {message}")
-    # return logger
-
-
-def get_logger(debug_mode:bool=False):
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-    logger = logging.getLogger(f"pd_chat_log_{timestamp}")
-    if debug_mode:
-        level = logging.DEBUG
-    else:
-        level = logging.INFO
-    logger.setLevel(level)
-    logger.propagate = False
-    while logger.hasHandlers():
-        logger.removeHandler(logger.handlers[0])
-    fHandler = logging.FileHandler(f"logs/pd_chat_{timestamp}.log")
-    fHandler.setLevel(logging.DEBUG)
-    logfile_format = logging.Formatter('%(asctime)s | %(levelname)s | %(message)s')
-    fHandler.setFormatter(logfile_format)
-    logger.addHandler(fHandler)
-    return logger
-
-logger = get_logger(debug_mode=True)
+def init_logger(name:str):
+    logger.remove()
+    path = conf["logs"]
+    os.makedirs(path, exist_ok=True)
+    logfile = f"{path}/log_{name}.log"
+    logger.add(logfile, 
+               colorize=True, 
+               format="{time} | {name}:{function}:{line} | {message}", 
+               level="DEBUG")
+    logger.add(sys.stdout, 
+               colorize=True, 
+               format="<green>{time}</green> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> | <yellow>{message}</yellow>", 
+               level="SUCCESS")
+    logger.add(sys.stderr, 
+               level="ERROR")
+    logger.info("Logger initialized with log file: {}", logfile)

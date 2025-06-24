@@ -1,0 +1,19 @@
+fullname,type,description
+STORE_NAME,STRING,store name
+STORE_NBR,INT64,store number 
+CITY_NAME,STRING,store city
+STATE_PROV_CODE,STRING,store state code (2 alphabetical upper case characters)
+POSTAL_CODE,STRING,store postal code
+SUBDIV_NBR,STRING,subdivision number
+SUBDIV_NAME,STRING,subdivision name
+REGION_NBR,INT64,region number
+REGION_NAME,STRING,region name
+MARKET_AREA_NBR,INT64,market area number
+MARKET_AREA_NAME,STRING,market area name
+COUNTY_NAME,STRING,county name
+STORE_SIZE_QTY,INT64,store size (in square feet)
+OPEN_STATUS_DESC,STRING,store age or opening/ closing status
+STORE_TYPE_DESC,STRING,store type
+TIME_ZONE_CODE,STRING,time zone
+LATITUDE_DGR,NUMERIC,latitude
+LONGITUDE_DGR,NUMERIC,longitude

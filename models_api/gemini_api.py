@@ -1,27 +1,30 @@
 import os
+import json
 from datetime import datetime
 from requests import models
-from typing import List, Dict, Union, Literal, Optional, Callable
+from typing import List, Dict, Union, Literal, Callable
 
-from utils.database import records_transaction
+from utils.database import Database
 from utils.config import conf
+from utils.logging import logger
 
 
 class chat_request:
     def __init__(self, system_prompt:str, **kwargs):
         self.system_prompt = system_prompt
-        self.functions = kwargs.get("functions", [])
+        self.tools = kwargs.get("tools", [])
         self.maxOutputTokens = kwargs.get("maxOutputTokens", 2048)
         self.temperature = kwargs.get("temperature", 0)
         self.topP = kwargs.get("topP", 0.95)
 
-    def get_usage_metadata(response:models.Response):
+    @staticmethod
+    def get_usage_metadata(response:Dict):
         counters = ["promptTokenCount", "candidatesTokenCount", "totalTokenCount"]
         try:
-            usage_metadata = response.json()["usageMetadata"]
-            return {counter: usage_metadata[counter] for counter in counters}
+            usage_metadata = response["usageMetadata"]
+            return {counter: usage_metadata.get(counter, 0) for counter in counters} # default to 0 if not present # candidate toke counter is absent if the LLM generates an empty string
         except KeyError:
-            raise ConnectionError("!API request failure!")
+            raise ConnectionError("!bad gateway response! Usage metadata not found.")
 
     def json(self, chat_messages:List[Dict]) -> Dict:
         model_params = {
@@ -60,15 +63,15 @@ class chat_request:
             }
         ]
         model_params.update({"safetySettings": safety_setings})
-        if self.functions:
-            functions = {
+        if self.tools:
+            tools = {
                 "tools": [
                     {
-                        "function_declarations": self.functions
+                        "function_declarations": self.tools
                     }
                 ]
             }
-            model_params.update(functions)
+            model_params.update(tools)
         return model_params
 
     def _payload(self, chat_messages:List[Dict], **kwargs) -> Dict:
@@ -91,69 +94,106 @@ class chat_request:
                 "responseSchema": response_schema
             }
             model_params["generation_config"].update(generation_config)
-        # attached_files = kwargs.get("attached_files", [])
-        # if attached_files:
-            # files = []
-            # for file in attached_files:
-                # files += [
-                    # {
-                        # "fileData": {
-                            # "mimeType": "text/plain", 
-                            # "fileUri": file
-                        # }
-                    # }
-                # ]
-            # models_params["contents"]["parts"]
         return model_params
 
     def payload(self, chat_messages:List[Dict], **kwargs) -> Dict:
+        """
+        Constructs the payload for the LLM API request based on the chat messages and additional parameters.
+        :param chat_messages: A list of dictionaries of chat messages.
+        :param kwargs: Additional keyword arguments for the payload.
+        :return: A dictionary representing the payload JSON for the API request.
+        """
         json = self._payload(chat_messages, **kwargs)
         if os.environ["PLATFORM"] == "vertexai":
             return json
-        if os.environ["PLATFORM"] == "element":
+        elif os.environ["PLATFORM"] == "element":
             return {
             "model": conf["models"]["llm"]["name"],
             "task": "generateContent",
             "model-params": json
             }
+        else:
+            err_msg = f"""!unknown platform!
+            {os.environ["PLATFORM"]}
+            Please set the PLATFORM environment variable to either 'vertexai' or 'element'."""
+            raise NotImplementedError(err_msg)
 
+    @staticmethod
     def parse_response(response_object:models.Response) -> Dict:
-        if "error" in response_object.json():
-            raise ValueError("!bad gateway response!")
+        """
+        Parses the response from the LLM API and extracts the relevant content.
+        :param response_object: The response object from the LLM API request.
+        :return: A dictionary containing the response content and mode.
+        """
+        response_json = response_object.json()
+        response_json_str = json.dumps(response_json, ensure_ascii=True, indent=4)
+        if "error" in response_json:
+            err_msg = f""""!bad gateway response!"
+            {response_json_str}
+            """
+            raise ValueError(err_msg)
         try:
-            record_usage_metadata(chat_request.get_usage_metadata(response_object))
-            part:Dict[str,Union[str,Dict]] = response_object.json()["candidates"][0]["content"]["parts"][0]
-            mode:Literal["text","functionCall"] = list(part.keys())[0]
-            response:Union[str,Dict] = list(part.values())[0]
-            return {"response":response, "mode":mode}
-        except (KeyError, IndexError) as err:
-            raise ValueError("!corrupt gateway response!")
+            logger.debug("Response object:\n{}", response_json_str)
 
+            record_usage_metadata(chat_request.get_usage_metadata(response_json))
+
+            part:Dict[str,Union[str,Dict]] = response_json["candidates"][0]["content"]["parts"][0]
+
+            for mode in ["text","functionCall"]:
+                if mode in part:
+                    response:Union[str,Dict] = part.get(mode, "")
+                    break
+            logger.info("Parsed response part:\n mode: {}\n response: {}", mode, response)
+            return {
+                "mode": mode, 
+                "response": response
+                }
+        except (KeyError, IndexError) as err:
+            err_msg = f"""!corrupt gateway response!
+            {response_json_str}
+            """
+            raise ValueError(err_msg)
+
+    @staticmethod
     def function_response(function_name:str, response) -> Dict:
+        logger.info("Function response object:\n{}", response)
         return {
+            "mode": "functionResponse",
+            "response": {
                 "name": function_name,
                 "response": {
                     "name": function_name,
                     "content": response
                 }
             }
+        }
 
 
 class chat_api_message:
-    def __init__(self, user_prompt:str=None, warm_start:List[Dict]=[]):
+    def __init__(self, user_prompt:str="", warm_start:List[Dict]=[]):
         self._messages = []
         self._messages += warm_start
         if user_prompt:
             self.append("user", user_prompt)
 
-    def template(role:Literal["user","model","function"], 
+    @staticmethod
+    def template(role:Literal["user", 
+                              "model", 
+                              "function"], 
                  response:Union[str,Dict], 
-                 mode:Literal["text","functionCall","functionResponse"]="text", 
-                 formatter:Optional[Callable[[str,str],str]]=lambda role, prompt: prompt, 
-                 attached_files:Optional[List]=[]) -> Dict:
+                 mode:Literal["text", 
+                              "functionCall", 
+                              "functionResponse"]="text", 
+                 formatter:Callable[[str,Union[str,Dict]],Union[str,Dict]]=lambda role, prompt: prompt, 
+                 attached_files:List=[], 
+                 **kwargs) -> Dict:
         return {
             "role": role,
-            "parts": [{mode: formatter(role, response)}] +\
+            "parts": [
+                {
+                    mode: formatter(role, response)
+                }
+            ] +\
             [
                 {
                     "fileData": {
@@ -164,7 +204,12 @@ class chat_api_message:
             ]
         }
 
-    def append(self, role:str, response:Union[str,Dict], **kwargs):
+    def append(self, 
+               role:Literal["user", 
+                            "model", 
+                            "function"], 
+               response:Union[str,Dict], 
+               **kwargs):
         self._messages.append(chat_api_message.template(role, response, **kwargs))
 
     def get_message(self, role:str, mode:str, i:int):
@@ -181,9 +226,22 @@ class chat_api_message:
     def messages(self) -> List[Dict]:
         return self._messages
 
+    def __str__(self) -> str:
+        return json.dumps(self.messages, ensure_ascii=True, indent=4)
 
-def record_usage_metadata(usage_metadata:Dict):
+
+def record_usage_metadata(usage_metadata:Dict, table_name:str="cost.requested_tokens"):
+    logger.debug("Persisting LLM API usage metadata to '{}'", table_name)
+    db = Database(table_name)
     model = conf["models"]["llm"]["name"]
     timestamp = str(datetime.now())
-    records = [[f"'{model}'", f"'{timestamp}'", f"'{token_counter}'", f"{str(count)}"] for token_counter,count in usage_metadata.items()]
-    records_transaction(records, table_name="requested_tokens")
+    records = [
+        [
+            f"'{model}'", 
+            f"'{timestamp}'", 
+            f"'{token_counter}'", 
+            f"{str(count)}"
+        ] for token_counter,count in usage_metadata.items()
+    ]
+    logger.debug("Inserting records:\n{}", "\n".join([", ".join(record) for record in records]))
+    db.records_transaction(records)
