@@ -2,34 +2,6 @@ from app.functions import Tools
 
 tools = [
     {
-        "name": Tools.submit_query_plan.__name__,
-        "description": Tools.submit_query_plan.__doc__,
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "details": {
-                    "type": "string", 
-                    "description": """Details of the query plan.
-                    It should cover the following:
-                    1. Sources of data, i.e., the tables.
-                    2. The grain of data, i.e., the primary keys for all the tables.
-                    3. Join conditions, join type, the join keys and the left and right tables, if a join is necessary.
-                    4. Filter conditions, if any.
-                    5. Grouping columns, if required, considering the grain of data.
-                    6. Filter conditions on grouped data, if needed.
-                    7. The metrics to be calculated and their aliases. Mention the summary functions and window functions, if used.
-                    8. Ordering of the results, if applicable.
-                    9. Any assumptions.
-                    10. Any additional information that may be relevant.
-                    """
-                }
-            },
-            "required": [
-                "details"
-            ],
-        }
-    },
-    {
         "name": Tools.fetch_data.__name__,
         "description": Tools.fetch_data.__doc__,
         "parameters": {
@@ -86,26 +58,6 @@ tools = [
             "required": [],
         }
     },
-
-    # {
-        # "name": Tools.get_dept_sbu_mapping.__name__,
-        # "description": Tools.get_dept_sbu_mapping.__doc__,
-        # "parameters": {
-            # "type": "object", 
-            # "properties": {
-                # "sbu": {
-                    # "type": "string", 
-                    # "description": "name of SBU correpsonding to which department names or numbers are required."
-                # },
-                # "dept": {
-                    # "type": "integer", 
-                    # "description": "Department number corresponding to which a department name or SBU name is required."
-                # },
-            # },
-            # "required": [],
-        # }
-    # },
-
     {
         "name": Tools.plot.__name__,
         "description": Tools.plot.__doc__,
@@ -154,46 +106,6 @@ tools = [
             ],
         }
     },
-
-    # {
-        # "name": Tools.scratch_pad.__name__,
-        # "description": Tools.scratch_pad.__doc__,
-        # "parameters": {
-            # "type": "object", 
-            # "properties": {
-                # "thoughts": {
-                    # "type": "string", 
-                    # "description": "Your plan to answer the users question."
-                # }
-            # },
-            # "required": [
-                # "thoughts"
-            # ],
-        # }
-    # },
-
-    # {
-        # "name": Tools.get_more_context.__name__,
-        # "description": Tools.get_more_context.__doc__,
-        # "parameters": {
-            # "type": "object", 
-            # "properties": {
-                # "follow_up_questions": {
-                    # "type": "array", 
-                    # "description": """A list of questions posed in order to extract more context on the user's query. They are clarifying or knowledge-seeking questions. If the user's query is a multi-part query break it down into simpler single-part questions. Ask about the concepts in the user's query you don't know or cannot assume from your knowledge. Ask as many as possible before assuming anything first.""",
-                    # "items": {
-                        # "description": """A follow-up question, e.g., given a user query, 'Which stores have a significant YoY growth and met their MSL target?', you can ask questions like 'How is YoY growth calculated?', 'How is MSL target defined?', etc.""",
-                        # "type": "string"
-                    # },
-                    # "minItems": "1",
-                    # "maxItems": "3"
-                # }
-            # },
-            # "required": [
-                # "follow_up_questions"
-            # ],
-        # }
-    # }
     {
         "name": Tools.EOS.__name__,
         "description": Tools.EOS.__doc__,

@@ -3,7 +3,6 @@ import pandas as pd
 from io import BytesIO
 from matplotlib import pyplot as plt
 from typing import List, Dict, Optional
-from functools import lru_cache
 
 from utils.config import conf
 from utils.utils import bigquery_job
@@ -11,129 +10,65 @@ from utils.logging import logger
 
 
 class Tools:
-    def __init__(self, use_validation:bool=True, use_reminder:bool=True):
+    def __init__(self, use_reminder:bool=True):
         """
         Initialize the Tools class with default values.
         """
-        self.use_validation = use_validation
-        if self.use_validation:
-            logger.info("Validating queries at generation")
-        else:
-            logger.info("Suspending validation at query generation")
-        self.is_validated = False
         self.use_reminder = use_reminder
         if self.use_reminder:
             logger.info("Sending a reminder at query generation")
         else:
             logger.info("Disabling reminders at query generation")
 
-    def reset_validation_state(self):
-        """
-        Reset the validation state of the Tools class.
-        This function is used to reset the validation state of the Tools class.
-        """
-        self.is_validated = False
-
-    def submit_query_plan(self, details:str, **kwargs) -> Dict[str, str]:
-        """
-        This function submits a query plan for validation.
-        :param plan: A query plan to be submitted for validation.
-        :return: A dictionary containing the status of the submission.
-        """
-        logger.info("Using tool 'submit_query_plan' with arguments:\n details = {}", details)
-        if details:
-            self.is_validated = True
-        return {
-            "status": "validated",
-            "message": "Query plan submitted successfully and validated. Call 'fetch_data' with the table IDs and SQL query based on this plan to fetch data.",
-        }
-
-    def fetch_data(self, table_id:List[str], query:str, **kwargs) -> List[Dict[str,str]]:
+    def fetch_data(self, table_id:List[str], query:str, max_rows:int=200, **kwargs) -> List[Dict[str,str]]:
         """
         This function fetches data from a BigQuery table using the provided query.
-        Before you call this function submit a query plan to the user for validation. You can access data only after your plan is validated. Call 'submit_query_plan' to submit your query plan for validation. However, if 'submit_query_plan' is not available, skip validation.
-        Also ensure that you have the table IDs before you call this function. Call 'get_bigquery_table' to get the table IDs.
+        Ensure that you have the table IDs before you call this function. Call 'get_bigquery_table' to get the table IDs.
         :param table_id: The IDs of the BigQuery tables to query.
         :param query: The SQL query to execute on the BigQuery table.
         :return: A list of dictionaries containing the queried data or an error message.
         :raises ValueError: If the table ID does not match the expected table ID in the configuration.
         """
         logger.info("Using tool 'fetch_data' with arguments:\n table_id = {},\n query = {}", "\n".join(table_id), query)
-        if self.use_validation and not self.is_validated:
-            return [
-                {
-                    "error": "You must submit a query plan and get it validated before you can call this function. Call 'submit_query_plan' to submit your query plan for validation."
-                }
-            ]
-        metadata = [metadata["table_id"] for table, metadata in conf["bigquery"].items()]
+        metadata = [metadata["table_id"] for table, metadata in conf["bigquery"]["tables"].items()]
         if not all([table in metadata for table in table_id]):
             return [
                 {
                 "error": f"'{table_id}' is not the correct table ID. Call 'get_bigquery_table' to get the correct table ID."
                 }
             ]
+        results = bigquery_job.run(query)
+        if len(results) > max_rows:
+            results = [
+                {
+                "error": f"Query returned more than {max_rows} rows. Please refine your query."
+                }
+            ]
         reminder = {
             "warning": """Verify that the generated query is correct. Reconsider the following rules you should follow to generate correct SQL.
-
             1. Aggregate depending on the grain of data.
             2. Deduplicate any string or date type columns in the select statement if there is no aggregation.
             3. Follow the rule of ratio of averages if a metric is a ratio.
             4. Round to 2 decimal places if the expected result is float type.
             5. Avoid zero-division error.
-            6. Use only the provided metrics definitions.
-
-            Calculate all the required metrics. Make corrections, if any, and call 'fetch_data' again."""
+            6. Use only the provided metrics definitions. Calculate all the required metrics.
+            Make corrections, if any, and call 'fetch_data' again."""
         }
-        results = bigquery_job.run(query)
         for item in results:
             if "error" in item:
                 if self.use_reminder:
                     item.update(reminder)
                     return results
-        self.reset_validation_state()
         return results
 
-    # @lru_cache
     def get_bigquery_table(self, **kwargs) -> Dict:
         """
         This function gets the bigquery table IDs and related metadata.
         :return: A dictionary containing the BigQuery table IDs and metadata.
         """
         logger.info("Using tool 'get_bigquery_table'")
-        metadata = conf["bigquery"]
+        metadata = conf["bigquery"]["tables"]
         return metadata
-
-    # @lru_cache
-    # def get_dept_sbu_mapping(sbu:Optional[str]=None, 
-                            # dept:Optional[int]=None, 
-                            # mapping_table:str=pd.read_csv("resources/combined/dept_SBU_mapping.csv"), **kwargs) -> List[Dict]:
-        # """
-        # Get the department name and number from SBU name or department name and SBU name from department number.
-        
-        # Returns
-        # -------
-        # dict
-            # A list of department names and numbers or SBU names.
-        # """
-        # SBUs = mapping_table["SBU"].unique()
-        # Departments = mapping_table["Dept_nbr"].astype(str).unique()
-        # if sbu:
-            # if sbu.upper() not in SBUs:
-                # return {
-                    # "error": f"sbu not found in the list of valid SBU names: {','.join(SBUs)}"
-                # }
-            # mapping = mapping_table.loc[mapping_table["SBU"] == sbu.upper(),["Dept_nbr","Dept_desc"]]
-        # elif dept:
-            # if str(dept) not in Departments:
-                # return {
-                    # "error": f"dept not found in the list of valid dept numbers: {','.join(Departments)}"
-                # }        
-            # mapping = mapping_table.loc[mapping_table["Dept_nbr"] == dept,["Dept_desc","SBU"]]
-        # else:
-            # return {
-                    # "error": "neither sbu or dept was provided. Provide one of them to get mapping."
-                # }
-        # return mapping.to_dict(orient="records")
 
     def table(self, query:str, records:List[Dict]) -> pd.DataFrame:
         """
