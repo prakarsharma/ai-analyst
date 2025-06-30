@@ -1,0 +1,9 @@
+What was the overall PoD growth or decline and sales and units lift?
+What were the overall top reasons for PoD deletion?
+What were the overall top reasons for facings change?
+What is the average DoS for the recommended mod? Compare it with current mod.
+How many linear inches are used for recommendation? Compare it with current mod.
+What is % of PnH violations? Compare it with current mod.
+Which Brands had significant PoD growth and which brands saw significant PoD decline?
+How many PoDs have more DoS than current mod?
+Which stores had significant PoD growth and which had significant PoD decine? What was the sales and units lift in each case? Report results overall and by geographic regions of the US.

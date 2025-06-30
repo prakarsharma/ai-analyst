@@ -1,9 +1,11 @@
+import pandas as pd
 from datetime import datetime
 from typing import List, Dict, Literal, Callable, Union, cast
-from loguru import logger
+from utils.logging import logger
 
 from models_api.generate import llm
 from models_api.system_prompt import judge
+from utils.bq import bigquery_job
 from utils.database import Database
 from utils.config import conf
 

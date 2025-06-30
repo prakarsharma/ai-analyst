@@ -71,7 +71,6 @@ class AugmentedGenerationPipeline:
     """
     def __init__(self, 
                  system_prompt:str, 
-                 use_validation:bool=conf["generation"]["use_validation"], 
                  use_reminder:bool=conf["generation"]["use_reminder"], 
                  evaluate:bool=conf["generation"]["evaluate"], 
                  **kwargs):
@@ -87,11 +86,7 @@ class AugmentedGenerationPipeline:
         logger.info("Initializing pipeline with LLM '{}'", conf["models"]["llm"]["name"])
         self.model = llm(system_prompt, tools=tools)
         self.tools = tools
-        if not use_validation:
-            for tool in self.tools:
-                if tool["name"] == "submit_query_plan":
-                    self.tools.remove(tool)
-        self.functions = Tools(use_validation, use_reminder)
+        self.functions = Tools(use_reminder)
         self.evaluate = evaluate
         if self.evaluate:
             logger.info("Using an evaluator for generated content")

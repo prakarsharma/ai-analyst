@@ -4,7 +4,7 @@ import json
 import pandas as pd
 from typing import List, Dict, Union
 
-from utils.utils import bigquery_job
+from utils.bq import bigquery_job
 
 
 def get_env_var(loader, node) -> str:

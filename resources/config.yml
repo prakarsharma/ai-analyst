@@ -11,15 +11,14 @@ models:
         endpoint: &em_api_endpoint !concat ['https://us-east5-aiplatform.googleapis.com/v1/projects/',*project,'/locations/us-east5/publishers/google/models/']
         gateway_url: !concat [*em_api_endpoint,*em,':predict']
 generation:
-    use_validation: false
-    use_reminder: false
+    use_reminder: true
     evaluate: false
 vector_database:
     path: &vector_store !concat ['resources/db/knowledge/model_',*em]
     document_uris: ["gs://p0s0a31/sao_chatbot/optimization_limited_v2.txt"]
     chunk_size: sentence
     chunk_overlap: 0
-    annotate_chunks: false
+    annotate_chunks: true
 retrieval:
     context_store: *vector_store
     rephrase_query: false
@@ -31,17 +30,24 @@ memory:
     cost: resources/db/cost/cost.db
     eval: resources/db/eval/eval.db
 bigquery:
-    explainability:
-        table_id: &explainations wmt-mtech-assortment-ml-prod.dm_assortment_analytics_stg.expl_reason_categories
-        description: !read_text 'resources/meta/explainability/explainability.txt'
-        schema: !get_or_read_schema
-            csv: 'resources/meta/explainability/explainability_limited.csv'
-            table_id: *explainations
-        primary_key: [Relay_Scenario_Name, jobId, planogram_or_store, rollup_id]
-    geography:
-        table_id: &geography wmt-edw-prod.US_CORE_DIM_VM.STORE_DIM_BPM
-        description: !read_text 'resources/meta/geography/geography.txt'
-        schema: !get_or_read_schema
-            csv: 'resources/meta/geography/geography_limited.csv'
-            table_id: *geography
-        primary_key: [STORE_NBR]
+    tables:
+        explainability:
+            table_id: &explanations wmt-mtech-assortment-ml-prod.dm_assortment_analytics_stg.expl_reason_categories
+            description: !read_text 'resources/meta/explainability/explainability.txt'
+            schema: !get_or_read_schema
+                csv: 'resources/meta/explainability/explainability_limited.csv'
+                table_id: *explanations
+            primary_key: [Relay_Scenario_Name, jobId, planogram_or_store, rollup_id]
+        geography:
+            table_id: &geography wmt-edw-prod.US_CORE_DIM_VM.STORE_DIM_BPM
+            description: !read_text 'resources/meta/geography/geography.txt'
+            schema: !get_or_read_schema
+                csv: 'resources/meta/geography/geography_limited.csv'
+                table_id: *geography
+            primary_key: [STORE_NBR]
+    joins:
+        explainability_geography:
+            left: *explanations
+            right: *geography
+            left_on: [planogram_or_store]
+            right_on: [STORE_NBR]
