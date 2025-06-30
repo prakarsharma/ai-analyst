@@ -1,0 +1,53 @@
+platform: !get_env_var PLATFORM
+project: &project !get_env_var GCLOUD_PROJECT_ID
+logs: logs
+models:
+    llm:
+        name: &llm gemini-2.0-flash-001
+        endpoint: &llm_api_endpoint !concat ['https://us-east5-aiplatform.googleapis.com/v1/projects/',*project,'/locations/us-east5/publishers/google/models/']
+        gateway_url: !concat [*llm_api_endpoint,*llm,':generateContent']
+    em:
+        name: &em text-embedding-005
+        endpoint: &em_api_endpoint !concat ['https://us-east5-aiplatform.googleapis.com/v1/projects/',*project,'/locations/us-east5/publishers/google/models/']
+        gateway_url: !concat [*em_api_endpoint,*em,':predict']
+generation:
+    use_reminder: true
+    evaluate: false
+vector_database:
+    path: &vector_store !concat ['resources/db/knowledge/model_',*em]
+    document_uris: ["gs://p0s0a31/sao_chatbot/optimization_limited_v2.txt"]
+    chunk_size: sentence
+    chunk_overlap: 0
+    annotate_chunks: true
+retrieval:
+    context_store: *vector_store
+    rephrase_query: false
+    top_n: null
+    filtering: F_score_based
+    evaluate: false
+    evaluation: average
+memory:
+    cost: resources/db/cost/cost.db
+    eval: resources/db/eval/eval.db
+bigquery:
+    tables:
+        explainability:
+            table_id: &explanations wmt-mtech-assortment-ml-prod.dm_assortment_analytics_stg.expl_reason_categories
+            description: !read_text 'resources/meta/explainability/explainability.txt'
+            schema: !get_or_read_schema
+                csv: 'resources/meta/explainability/explainability_limited.csv'
+                table_id: *explanations
+            primary_key: [Relay_Scenario_Name, jobId, planogram_or_store, rollup_id]
+        geography:
+            table_id: &geography wmt-edw-prod.US_CORE_DIM_VM.STORE_DIM_BPM
+            description: !read_text 'resources/meta/geography/geography.txt'
+            schema: !get_or_read_schema
+                csv: 'resources/meta/geography/geography_limited.csv'
+                table_id: *geography
+            primary_key: [STORE_NBR]
+    joins:
+        explainability_geography:
+            left: *explanations
+            right: *geography
+            left_on: [planogram_or_store]
+            right_on: [STORE_NBR]

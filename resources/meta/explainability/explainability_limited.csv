@@ -1,0 +1,63 @@
+fullname,type,description
+Relay_Scenario_Name,STRING,optimization run unique ID
+jobId,STRING,job ID of the optimization run
+modlr_dept_nbr,INTEGER,mod department number
+modlr_catg_nbr,INTEGER,mod category number
+modlr_catg_desc,STRING,mod category description
+fineline,STRING,fineline name
+brand,STRING,brand name
+vendor,STRING,vendor name
+planogram_or_store,STRING,planogram/ store unique ID
+fixture_type,STRING,"roll-up grouping (a physical display case, e.g., shelf, etc.)"
+rollup_id,INTEGER,roll-up/ item unique ID
+rollup_desc,STRING,roll-up/ item name/ description
+status_name,STRING,"recommendation - can be 'add', 'delete', 'maintain' or 'not added'"
+Finer_Reason,STRING,"Recommendation reason code. Valid codes are: 'Intuitive', 'Width not sufficient to adhere utilization', 'Protect List', 'Space available for additional productive items', 'Global Deletes', 'No better item to add / expand', 'Item cannot fit on the shelf', 'Covers a need state', 'Do Not Carry List', 'Not productive when required to meet PnH', 'DoS / PnH Violation', 'Better substitute Recommended', 'More productive items recommended', 'No better item to add / expand', 'Other', '1. Others - Contribution % lies > 95% (low performing item)', '2. Others'"
+Broader_Reason,STRING,"Recommendation reason category. Valid categories are: 'Intuitive', 'Soft Constraint Penalty', 'Force Protect', 'Space Availability', 'Better Recommendation', 'Force Delete', 'Other'"
+Explanation,STRING,"reasons/ explanation for an 'add' or 'delete' recommendation, i.e., why an item is added or deleted"
+higher_performing_sub,STRING,"higher performing substitute name/ description, if any"
+rec_facings,INTEGER,recommended number of facings
+cur_facings,INTEGER,number of facings in the current mod
+facings_rec_details,STRING,"reasons/ explanation for a facings change, i.e., expansion or contraction"
+facing_width,FLOAT,facing width in inches
+total_comp_shelf_width,FLOAT,total shelf width in inches
+dos_rec_facings,FLOAT,calculated DoS at recommended facings
+dos_facings_horizontal,FLOAT,DoS calculated at current/ historical facings
+rec_units,FLOAT,Recommended units
+rec_sales,FLOAT,Recommended sales
+rec_profits,FLOAT,Recommended profits
+do_nothing_profits,FLOAT,Base forecast profit for current mod items
+do_nothing_sales,FLOAT,Base forecast sales for current mod items
+do_nothing_units,FLOAT,Base forecast units for current mod items
+facings_horizontal,INTEGER,facings on historical mod
+one_facing_wide_capacity,FLOAT,stock quantity at one facing
+mod_length_wks,INTEGER,mod length in weeks
+Max_Nominal_Demand,FLOAT,linear nominal demand at maximum facing
+Nominal_Demand_MinFacing,FLOAT,linear nominal demand at minimum facing
+nominal_demand_per_inch,FLOAT,Demand (units) by width at minimum facings. Also called productivity.
+normalized_demand,FLOAT,normalized demand
+cur_mod_demand_contribution,FLOAT,"For current mod PoDs, contribution to total normalized_demand. Calculated as cumulative sum of normalized_demand (in descending order) / total normalized_demand . Lower is better."
+cur_mod_fcst_usw_contribution,FLOAT,"for current mod PoDs, contribution to total units per store per week forecast."
+overall_fcst_demand_contribution,FLOAT,contribution to total normalized demand
+overall_fcst_usw_contribution,FLOAT,contribution to total units per store per week forecast
+national_productivity_rank,INTEGER,rank based on nominal_demand_per_inch at national level (considering the sum of nominal demand per inch for the item across all stores)
+avg_national_productivity_rank,INTEGER,rank based on nominal_demand_per_inch at national level (considering the average nominal demand per inch for the item across all stores)
+productivity_percentile_rank,FLOAT,rank by productivity expressed as a fraction
+productivity_rank,INTEGER,rank in the store based on the productivity percentile
+rollup_usw_rank,INTEGER,rank across all the stores at the national level based on its units sold per store per week (forecast)
+rollup_actuals_usw_rank,INTEGER,rank across all the stores at the national level based on its units sold per store per week (actuals)
+in_store_unit_rank,INTEGER,rank in the store based on total units
+demand_transferred_to_subs_on_mod,FLOAT,fractional demand transferred to substitutes in case of a 'delete' recommendation
+abs_demand_transferred,FLOAT,demand times demand-transferred-to-substitutes
+do_not_carry_list,BOOLEAN,indicator of a global constraint
+global_deletes,BOOLEAN,indicator of a global constraint
+protect_list,BOOLEAN,indicator of a protect strategy
+is_intuitive,INTEGER,indicator if the recommendation is intuitive based on total_comp_shelf_width and productivity_percentile_rank
+is_dos_violated,INTEGER,indicator of a DoS constraint violation
+is_sub_avail,INTEGER,indicator if a subtitute is available
+facing_max_out,INTEGER,"PoD maxed out on facings because:
+1. recommended facings reached a cut off point (no more incrementality at higher facings) or,
+2. adding more facings incurs more DoS penalty or,
+3. adding more facings exceeds total shelf width or,
+4. if status is 'not added' then any number of facings incur either PnH or DoS penalty or,
+4. it is a force delete"

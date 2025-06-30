@@ -1,0 +1,51 @@
+#!/usr/bin/bash
+
+# if [[ $CONDA_DEFAULT_ENV -ne ai-analyst-env ]]
+  # source /opt/conda/bin/activate ai-analyst-env
+# fi
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --platform)
+      if [[ -n "$2" ]]; then
+        export PLATFORM=$2
+        # conda env config vars set PLATFORM=$2
+        shift
+      else
+        echo "Error: Platform not specified."
+        exit 1
+      fi
+      ;;
+    --gcloud-project-id)
+      if [[ -n "$2" ]]; then
+        export GCLOUD_PROJECT_ID=$2
+        # conda env config vars set GCLOUD_PROJECT_ID=$2
+        shift
+      else
+        echo "Error: Google cloud project ID not specified."
+        exit 1
+      fi
+      ;;
+    --bigquery-connector)
+      if [[ -n "$2" ]]; then
+        export BIGQUERY_CONNECTOR=$2
+        # conda env config vars set BIGQUERY_CONNECTOR=$2
+        shift
+      else
+        echo "Error: BigQuery connector not specified."
+        exit 1
+      fi
+      ;;
+    *)
+      echo "Unknown option: $1"
+      exit 1
+      ;;
+  esac
+  shift
+done
+
+if [[ $CONDA_DEFAULT_ENV != ai-analyst-env ]]; then
+  conda run -n ai-analyst-env --cwd /home/jupyter/ai-analyst --live-stream streamlit run chat.py
+else
+  streamlit run ~/ai-analyst/chat.py
+fi

@@ -1,0 +1,95 @@
+fullname,type,description
+Relay_Scenario_Name,STRING,optimization run unique ID
+modlr_dept_nbr,INTEGER,mod department number
+modlr_catg_nbr,INTEGER,mod category number
+planogram_or_store,STRING,store number (or planogram unique ID in case of a planogram optimization run)
+fixture_type,STRING,"roll-up grouping (a physical display case, e.g., shelf, etc.)"
+total_comp_shelf_width,FLOAT,total shelf width in inches
+rollup_id,INTEGER,roll-up unique ID
+status_name,STRING,"recommendation - can be 'add', 'delete', 'maintain' or 'not added'"
+rec_facings,INTEGER,recommended number of facings for the roll-up at a store in the proposed mod
+cur_facings,INTEGER,number of facings for the roll-up in the current mod
+facing_width,FLOAT,facing width in inches
+on_mod_subs_count,INTEGER,number of substitutes of the roll-up present on the current mod
+demand_transferred_to_subs_on_mod,FLOAT,fractional demand transferred to substitutes in case of a 'delete' recommendation
+total_subs_count,INTEGER,overall total number of substitutes of the roll-up
+linear_nominal_dem,STRING,Estimated demand (units) for each facing from minimum up to maximum. It is estimated as a linear regression of raw nominal demand against number of facings and capped at nominal_demand_facing. It is an array of 10 elements.
+do_not_carry_list,BOOLEAN,indicator of a global constraint
+global_deletes,BOOLEAN,indicator of a global constraint
+protect_list,BOOLEAN,indicator of a protect strategy
+max_on_max_dos_constraint_75p,FLOAT,second level ceiling constraint for DoS
+max_dos_constraint_50p,FLOAT,first level ceiling constraint for DoS
+min_dos_constraint_1p,FLOAT,floor constraint for DoS
+dos_rec_facings,FLOAT,calculated DoS at recommended facings
+dos_facings_horizontal,FLOAT,DoS calculated at facings_horizontal
+facings_needed_for_pnh,INTEGER,facings needed to satisfy PnH constraint
+dos_pnh_facings,FLOAT,calculated DoS at facings equal to facings_needed_for_pnh
+pnh_rec_facings,FLOAT,stock quantity at recommended facings expressed as a multiple of PnH
+pnh_cur_facings,FLOAT,stock quantity at current facings expressed as a multiple of PnH
+forecasted_units,FLOAT,units forecast
+forecast_revenue,FLOAT,reveneue forecast
+lower_bound_facing_count,INTEGER,minimum facings
+upper_bound_facing_count,INTEGER,maximum facings
+store_costs_pct,STRING,Store cost percentage for each facing from minimum to maximum facings. It is an array of 10 elements.
+lost_sales_pct,STRING,Lost sales percentage (in the event of out-of-stock or 'delete' status) for each facing from minimum to maximum facings. It is an array of 10 element.
+sum_nominal_dem,STRING,Raw nominal demand (units) for each facing from minimum to maximum facings. It is an array of 10 elements.
+nominal_demand_facing,INTEGER,first element in the linear_nominal_dem array where linear_nominal_dem >= sum_nominal_dem. It is the  upper cap on estimated demand.
+nominal_demand_per_inch,FLOAT,Demand (units) by width at minimum facings. Also called productivity.
+productivity_percentile_rank,FLOAT,rank by productivity expressed as a fraction.
+jobId,STRING,job ID of the optimization run
+is_intuitive,INTEGER,indicator if the recommendation is intuitive based on total_comp_shelf_width and productivity_percentile_rank
+facing_max_out,INTEGER,"PoD maxed out on facings because:
+1. recommended facings reached a cut off point (no more incrementality at higher facings) or,
+2. adding more facings incurs more DoS penalty or,
+3. adding more facings exceeds total shelf width or,
+4. if status is 'not added' then any number of facings incur either PnH or DoS penalty or,
+4. it is a force delete"
+is_dos_violated,INTEGER,indicator of a DoS constraint violation
+is_sub_avail,INTEGER,indicator if a subtitute is available
+contribution_forecast_revenue,FLOAT,Contribution to total forecasted_revenue. Calculated as cumulative sum of forecasted_revenue (in descending order) / total forecast_revenue . Lower is better.
+contribution_forecasted_units,FLOAT,Contribution to total forecasted_units. Calculated as cumulative sum of forecasted_units (in descending order) / total forecasted_units . Lower is better.
+contribution_nominal_demand_per_inch,FLOAT,Contribution to total nominal_demand_per_inch. Calculated as cumulative sum of nominal_demand_per_inch (in descending order) / total nominal_demand_per_inch . Lower is better.
+Finer_Reason,STRING,Details on the broad reason for the recommendation
+Broader_Reason,STRING,Broad reason for the recommendation
+rollup_desc,STRING,roll-up name/ description
+productivity_percentile,FLOAT,Percentile in the cumulative productivity distribution of PoDs. Higher is better.
+productivity_rank,INTEGER,Rank based on the productivity percentile.
+change_in_mod_pct,FLOAT,"only applicable for planogram optimization - for each rollup-planogram pair, the percent of stores in add or delete status"
+cur_mod_demand_contribution,FLOAT,"For current mod PoDs, contribution to total normalized_demand. Calculated as cumulative sum of normalized_demand (in descending order) / total normalized_demand . Lower is better."
+cur_mod_demand_percent_rank,FLOAT,"For current mod PoDs, rank of the items in the store or planogram based on normalized demand percentile."
+facings_horizontal,INTEGER,facings on current mod or historical mod (if PoD is not on current mod)
+forecast_profits,FLOAT,profits forecast
+normalized_demand,FLOAT,normalized demand
+one_facing_wide_capacity,FLOAT,stock quantity at one facing
+store_on_mod_pct,FLOAT,only applicable for planogram optimization runs - percentage of on-mod in stores
+warehouse_pack_quantity,INTEGER,pack size (units)
+mod_length_wks,INTEGER,mod length in weeks
+rollup_fcst_usw,FLOAT,units per store per week forecast
+rollup_usw_rank,INTEGER,Rank of an item across all the stores at the national level based on its units sold per store per week (forecast)
+cur_mod_fcst_usw_contribution,FLOAT,"for current mod PoDs, contribution to total units per store per week forecast."
+overall_fcst_demand_contribution,FLOAT,contribution to total normalized demand
+overall_fcst_usw_contribution,FLOAT,contribution to total units per store per week forecast
+rec_units,FLOAT,Recommended units
+rec_sales,FLOAT,Recommended sales
+rec_profits,FLOAT,Recommended profits
+lst52_upspw,FLOAT,last 52 week actuals units per store per week
+lst52_actls,FLOAT,last 52 weeks actual units
+rollup_actuals_usw_rank,INTEGER,rank of an item across all the stores at the national level based on its units sold per store per week (actuals)
+cur_mod_actuals_usw_contribution,FLOAT,"for current mod PoDs, contribution to total units per store per week actuals"
+overall_actuals_usw_contribution,FLOAT,contribution to total units per store per week actuals
+fineline,STRING,fineline name
+brand,STRING,brand name
+vendor,STRING,vendor name
+higher_performing_sub,STRING,"higher performing substitute name/ description, if any"
+do_nothing_profits,FLOAT,Base forecast profit for current mod items (used to report financials)
+do_nothing_sales,FLOAT,Base forecast sales for current mod items  (used to report financials)
+do_nothing_units,FLOAT,Base forecast units for current mod items  (used to report financials)
+Max_Nominal_Demand,FLOAT,linear nominal demand at maximum facing
+Nominal_Demand_MinFacing,FLOAT,linear nominal demand array at minimum facing
+abs_demand_transferred,FLOAT,demand times demand-transferred-to-substitutes
+national_productivity_rank,INTEGER,rank of an item based on nominal_demand_per_inch at national level (considering the sum of nominal demand per inch for the item across all stores)
+avg_national_productivity_rank,INTEGER,rank of an item based on nominal_demand_per_inch at national level (considering the average nominal demand per inch for the item across all stores)
+in_store_unit_rank,INTEGER,rank of an item in the store based on total units
+Explanation,STRING,an elaborate explanation of the reasons for the recommendation
+modlr_catg_desc,STRING,mod category description
+facings_rec_details,STRING,explanation for change in number of facings
