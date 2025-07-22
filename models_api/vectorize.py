@@ -20,12 +20,25 @@ from utils.logging import logger
 
 
 class embeddingModel(EmbeddingFunction):
+    """
+    This class defines an embedding model for vectorization tasks.
+    """
     def __init__(self, task:str="SEMANTIC_SIMILARITY"):
+        """
+        Initializes the embedding model.
+        :param task: The downstream task for which the generated embeddings are intended.
+        """
         self.headers:Dict = authentication()
         self.task = task.upper()
         # self.title = title
 
     def __call__(self, input:Documents) -> Embeddings:
+        """
+        Generates embeddings for the input documents.
+        :param input: A string or a list of strings to be vectorized.
+        :raises ConnectionError: If the API request fails.
+        :return: Embeddings.
+        """
         input_ = "".join(input) # input:Union[str,List[str]]
         self.task = cast(
             Literal[
@@ -50,6 +63,10 @@ class embeddingModel(EmbeddingFunction):
 
 
 class vectorDB:
+    """
+    This class defines a vector database for storing and querying documents embeddings.
+    It uses a Chroma DB Persistent client to manage the database and allows flexibility in the choice of embedding models and dimensions.
+    """
     def __init__(self, 
                  name:str, 
                  path:str, 
@@ -57,6 +74,14 @@ class vectorDB:
                  distance:str="cosine", 
                  overwrite:bool=False, 
                  **kwargs):
+        """
+        Initializes the vector database.
+        :param name: Name of the vector database.
+        :param path: Path to the storage directory.
+        :param embedding_function: Embedding function to use for vectorization.
+        :param distance: Distance metric to use for similarity search (default is "cosine").
+        :param overwrite: If True, overwrites the database if it exists (default is False).
+        """
         self.name = name
         self.path = path
         if not embedding_function:
@@ -70,6 +95,10 @@ class vectorDB:
             self.db = self.get_or_create()
 
     def get_or_create(self):
+        """
+        Gets an existing vector database or create a new one if it does not exist.
+        :return: A vector database.
+        """
         if not os.path.exists(self.path):
             logger.info("Creating persist directory at: {}", self.path)
             os.makedirs(self.path)
@@ -88,6 +117,9 @@ class vectorDB:
         return db
 
     def delete(self):
+        """
+        Deletes the vector database and its persistent storage directory.
+        """
         if self.client is not None:
             logger.info("Deleting collection: {}", self.name)
             self.client.delete_collection(name=self.name)
@@ -101,12 +133,22 @@ class vectorDB:
 
     @property
     def n_docs(self) -> int:
+        """
+        Returns the number of documents in the vector database.
+        :raises ValueError: If the vector database does not exist.
+        """
         if self.db is None:
             raise ValueError("!vector database not created!")
         else:
             return self.db.count()
 
     def upsert(self, documents:Dict[str,str], embeddings:Optional[List[List[float]]]=None, **metadata):
+        """
+        Inserts or updates documents in the vector database.
+        :param documents: A dictionary where keys are document IDs and values are the document contents.
+        :param embeddings: Optional list of embeddings corresponding to the documents.
+        :param metadata: Optional metadata to associate with the documents.
+        """
         for i, doc in documents.items():
             kwargs = {"documents": [doc], "ids": [i]}
             if metadata:
@@ -121,6 +163,15 @@ class vectorDB:
                      top_n:Optional[int]=None, 
                      filtering:Literal["F-score-based", "gaussian-mixture-classification"]="F-score-based", 
                      **metadata) -> pd.DataFrame:
+        """
+        Retrieves the top matches for a given document from the vector database.
+        :param document: The document to search for.
+        :param top_n: The number of top matches to retrieve. If None, retrieves all documents in the vector database.
+        :param filtering: The type of filtering to apply to the results. Options are "F-score-based" or "gaussian-mixture-classification".
+        :param metadata: Optional metadata to use to filter the search results.
+        :return: A DataFrame containing the top matches with their similarity scores and metadata.
+        :raises ValueError: If no search results are found or if the query document is blank.
+        """
         search_result = self.query(document, top_n, **metadata)
         if not search_result:
             raise ValueError("!no search results found!")
@@ -138,6 +189,15 @@ class vectorDB:
                     top_n:Optional[int]=None, 
                     filtering:Literal["F-score-based", "gaussian-mixture-classification"]="F-score-based", 
                     **metadata) -> Dict[str, List]:
+        """
+        Retrieves the top matches for a given document from the vector database.
+        :param document: The document to search for.
+        :param top_n: The number of top matches to retrieve. If None, retrieves all documents in the vector database.
+        :param filtering: The type of filtering to apply to the results. Options are "F-score-based" or "gaussian-mixture-classification" (defaults to "F-score-based").
+        :param metadata: Optional metadata to use to filter the search results.
+        :return: A dictionary with the top matches along with their similarity scores and metadata.
+        :raises ValueError: If no search results are found or if the query document is blank.
+        """
         matches:pd.DataFrame = self._top_matches(document, top_n, filtering, **metadata)
         return matches.to_dict(orient="list") # type: ignore
 
@@ -145,6 +205,14 @@ class vectorDB:
               query_text:str="", 
               top_n:Optional[int]=None, 
               **metadata) -> Dict[str, List[List]]:
+        """
+        Queries the vector database for documents similar to the given query text.
+        :param query_text: The text to search for.
+        :param top_n: The number of top results to return. If None, returns all documents in the vector database.
+        :param metadata: Optional metadata to use to filter the search results.
+        :return: A dictionary with the query results along with distances and documents.
+        :raises ValueError: If the query text is blank or if the vector database does not exist.
+        """
         if not query_text:
             raise ValueError("!query cannot be blank!")
         logger.info("Querying vector database with query: '{}'", query_text.replace("'", "\\'").replace('"', '\\"'))
@@ -164,6 +232,11 @@ class vectorDB:
 
     @staticmethod
     def tabulate_results(query_result:Dict[str,List[List]]) -> pd.DataFrame:
+        """
+        Converts the query results into a DataFrame of similarity scores and metadata.
+        :param query_result: The result of the query from the vector database.
+        :return: A DataFrame with similarity scores, document IDs, and metadata.
+        """
         results = 1 - pd.DataFrame(query_result["distances"][0], index=query_result["ids"][0], columns=["similarity"])
         results["documents"] = query_result["documents"][0]
         results["nodes"] = results.index.to_series().astype(str)
@@ -173,6 +246,13 @@ class vectorDB:
     def Filter(scores:pd.DataFrame, 
                filtering:Literal["F-score-based", "gaussian-mixture-classification"]="F-score-based", 
                return_matching:bool=True) -> pd.DataFrame:
+        """
+        Filters the results based on similarity and probability scores.
+        :param scores: DataFrame of similarity scores and other metadata.
+        :param filtering: Type of filtering to apply. Options are "F-score-based" or "gaussian-mixture-classification".
+        :param return_matching: If True, returns only the matching scores. Returns all scores otherwise.
+        :return: Filtered DataFrame with similarity scores and metadata.
+        """
         try:
             N = len(scores)
             scores["probability"] = softmax(scores["similarity"].values)
@@ -204,6 +284,12 @@ class vectorDB:
 
     @staticmethod
     def F_score_based_filter(scores:pd.DataFrame, return_matching:bool=True) -> pd.DataFrame:
+        """
+        Filters the results based on F-score.
+        :param scores: DataFrame of similarity scores and other metadata.
+        :param return_matching: If True, returns only the matching scores. Returns all scores otherwise.
+        :return: Filtered DataFrame with similarity scores and metadata.
+        """
         scores = vectorDB.F_score(scores)
         highest_F_score = scores["F"].max()
         if not np.isnan(highest_F_score):
@@ -214,6 +300,11 @@ class vectorDB:
 
     @staticmethod
     def F_score(data:pd.DataFrame) -> pd.DataFrame:
+        """
+        Calculates the F-score for each document in the DataFrame.
+        :param data: DataFrame with similarity scores and metadata.
+        :return: DataFrame with F-score and other metadata.
+        """
         mean = data["similarity"].mean()
         data["rank"] = data["similarity"].rank(method="first", ascending=False)
         data["reverse_rank"] = (len(data) - data["rank"]).replace(0, pd.NA)

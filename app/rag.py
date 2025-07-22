@@ -10,7 +10,7 @@ timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
 def parse_cli_args() -> argparse.Namespace:
     """
-    Parse command line arguments.
+    Parses command line arguments.
     """
     parser = argparse.ArgumentParser(description="Generate response to a query with specified augmentations.")
     parser.add_argument("--query", type=str, required=True, help="Query text")
@@ -28,7 +28,7 @@ def retrieve_augment_generate(system_prompt:str,
                               plan:bool=False, 
                               evaluate:bool=False) -> str:
     """
-    Retrieve context based on the query and generate a response given the additional context using the LLM.
+    Retrieves context based on the query and generate a response given the additional context using the LLM.
     """
     chat = chat_api_message()
     generation_pipeline = AugmentedGenerationPipeline(system_prompt=system_prompt, 

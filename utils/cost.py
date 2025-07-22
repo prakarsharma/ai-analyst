@@ -41,6 +41,15 @@ counters = {
 }
 
 def get_price(tokens_type:Literal["input","output"]):
+    """
+    Formulates a SQL query to calculate the cost of requested tokens for a specific model and token type.
+    The tokens_type can be either 'input' or 'output'.
+    The function retrieves the model name from the configuration and uses it to look up the pricing details
+    in the pricing dictionary.
+    It constructs a SQL query that sums the cost of tokens based on the rate and any applicable limits or unlimited rates.
+    The query filters the results based on the token type and model.
+    The result will be the total cost in dollars for the requested tokens of the specified type and model.
+    """
     model:str = conf["models"]["llm"]["name"]
     model_pricing = pricing[model][tokens_type]
     rate = model_pricing["rate"]

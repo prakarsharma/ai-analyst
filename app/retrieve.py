@@ -8,7 +8,7 @@ from utils.logging import init_logger
 
 def parse_cli_args() -> argparse.Namespace:
     """
-    Parse command line arguments.
+    Parses command line arguments.
     """
     parser = argparse.ArgumentParser(description="Retrieve context based on a query.")
     parser.add_argument("--query", type=str, required=True, help="Query text")
@@ -25,7 +25,7 @@ def retrieve_context(query:str,
                      evaluate:bool=False, 
                      **kwargs) -> Dict:
     """
-    Retrieve context based on the query.
+    Retrieves context based on the query.
     """
     retrieval_pipeline = RetrievalPipeline(rephrase_query=rephrase_query, 
                                            top_n=top_n, 

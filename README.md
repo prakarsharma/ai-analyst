@@ -1,88 +1,102 @@
-# SAO Chat: LLM-Powered Conversational Reporting Tool
+# SAO Chat: LLM-Powered Analytics Tool
 
 ## Overview
 
-AI analyst is a Large Language Model (LLM) powered conversational reporting and analytics tool. It enables users to interact with data and knowledge bases using natural language, leveraging retrieval-augmented generation (RAG), semantic search, and integration with BigQuery for advanced data analysis and reporting.
+SAO-chat is a LLM powered conversational analytics and reporting tool. It enables users to interact with data in enterprise BigQuery using natural language. It is implemented as a RAG pipeline to provide the LLM necessary and specific context. It is an agentic framework. The agent can employ a BigQuery client to fetch data necessary to generate a response.
 
 ## Features
 
-- **Conversational Analytics**: Query and analyze data using natural language.
-- **Retrieval-Augmented Generation (RAG)**: Combines LLMs with vector search for context-aware responses.
-- **BigQuery Integration**: Fetch, validate, and analyze data from BigQuery tables.
-- **Semantic Search**: Annotate and retrieve document chunks using vector databases.
-- **Automated Evaluation**: LLM-based evaluation of generated responses and retrieval quality.
-- **Extensible Tooling**: Modular tools for data fetching, table/plot generation, and more.
 
 ## Repository Structure
 
 ```
 sao-chat/
-├── app/                # Core application logic (retrieval, augmentation, tools, evaluation)
-├── models_api/         # LLM, embedding, and system prompt interfaces
-├── notebooks/          # Example and development Jupyter notebooks
-├── resources/          # Configurations, schemas, and supporting files
+├── app/                # app logic (chatbot, retrieval and generation pipeline, context store, tools, eval, and scripts)
+├── models_api/         # LLM, embedding model, vector database, and prompts (system prompt and tools declaration)
+├── notebooks/          # Illustrative and development Jupyter notebooks
+├── resources/          # Config, schemas, and supporting files
 ├── utils/              # Utilities (config, logging, database, etc.)
 ├── requirements.txt    # Python dependencies
 ├── README.md           # Project documentation
 └── ...
 ```
 
-## Installation
+## Runbook
 
 1. **Clone the repository:**
-   ```bash
-   git clone <repository-url>
-   cd sao-chat
-   ```
-2. **Install dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
-   Or use a virtual environment:
-   ```bash
-   python3 -m venv venv
-   source venv/bin/activate
-   pip install -r requirements.txt
-   ```
+  ```bash
+  git clone https://<PAT>@gecgithub01.walmart.com/p0s0a31/ai-analyst.git
+  cd ai-analyst
+  git checkout -b p0s0a31-working/sao
+  git pull origin p0s0a31-working/sao
+  git checkout -b <your-branch-name>
+  ```
+
+2. **Create an environment**
+  ```bash
+  conda env create -f env.yml
+  pip install -r requirements.txt
+  ```
+
+3. **Upload certificates**
+  ```bash
+  mkdir ../.ssl_certs
+  mv ca-bundle.crt ../.ssl_certs/ca-bundle.crt
+  ```
 
 ## Usage
 
-- **Start the application:**
-  (Implementation may vary; typically, you would run a main script or use a notebook)
+**Load the vector DB (required if you want to use retrieval or RAG or the NL2SQL agent)**
+```bash
+nohup env PLATFORM=vertexai GCLOUD_PROJECT_ID=wmt-mtech-assortment-ml-prod conda run -n ai-analyst-env --cwd "$(dirname $PWD)/$(basename $PWD)" python -m app.load_vector_store > load.out 2>&1 &
+```
+
+- **To generate dynamic insights:**
   ```bash
-  python -m app.main
+  nohup env PLATFORM=vertexai GCLOUD_PROJECT_ID=wmt-mtech-assortment-ml-prod conda run -n ai-analyst-env --cwd "$(dirname $PWD)/$(basename $PWD)" python -m app.qna --relay <your-relay-name> > outputs.out 2>&1 &
   ```
-- **Jupyter Notebooks:**
-  Explore the `notebooks/` directory for example workflows and usage demos.
+
+- **To use the LLM for generation task:**
+  ```bash
+  PLATFORM=vertexai GCLOUD_PROJECT_ID=wmt-mtech-assortment-ml-prod conda run -n ai-analyst-env --cwd "$(dirname $PWD)/$(basename $PWD)" python -m app.test_llm_api --prompt <your-prompt>
+  ```
+
+- **To use the retrieval pipeline for retrieval task:**
+  ```bash
+  PLATFORM=vertexai GCLOUD_PROJECT_ID=wmt-mtech-assortment-ml-prod conda run -n ai-analyst-env --cwd "$(dirname $PWD)/$(basename $PWD)" python -m app.retrieve --query <your-query>
+  ```
+
+- **To use the RAG pipeline:**
+  ```bash
+  PLATFORM=vertexai GCLOUD_PROJECT_ID=wmt-mtech-assortment-ml-prod conda run -n ai-analyst-env --cwd "$(dirname $PWD)/$(basename $PWD)" python -m app.rag --query <your-query> --get_context
+  ```
+
+- **To use the NL2SQL agent:**
+  ```bash
+  PLATFORM=vertexai GCLOUD_PROJECT_ID=wmt-mtech-assortment-ml-prod conda run -n ai-analyst-env --cwd "$(dirname $PWD)/$(basename $PWD)" python -m app.react --query <your-query> --get_context
+  ```
 
 ## Configuration
 
-- Main configuration is in `resources/config.yml` (edit for data sources, model settings, etc.).
-- BigQuery and other credentials should be set up as described in the config and code comments.
 
 ## Key Modules
 
-- `app/main.py`: Entry point for the chatbot and generation pipeline.
-- `app/knowledge.py`: Context store and retrieval pipeline for semantic search and RAG.
-- `app/functions.py`: Tooling for data fetching, validation, and visualization.
-- `app/eval.py`: LLM-based evaluation of responses and retrievals.
-- `models_api/`: LLM and embedding model interfaces.
-- `utils/`: Configuration, logging, and utility functions.
+- `app/main.py`: Chatbot and augmented-generation pipeline (entry point).
+- `app/knowledge.py`: Context store and retrieval pipeline.
+- `app/functions.py`: Tooling for fetching data and metadata from BigQuery, and results tabulation and visualization.
+- `app/eval.py`: Evaluator for retrieval and generation tasks.
+- `models_api/generate.py`: LLM
+- `models_api/gemini_api.py`: LLM API call payload and chat history storage.
+- `models_api/vectorize.py`: Embedding model and vector database.
+- `models_api/embedding_api.py`: Embedding model API payload.
+- `models_api/function_template.py`: Agent tools declaration.
+- `models_api/system_prompt.py`: System prompt.
+- `resources/`: Local databases (cost, evaluation and knowledge), metadata on BigQuery tables, and configurations.
+- `utils/`: Logging, loading configurations, querying local databases, authentication and other utilities.
+- `chat.py`: Streamlit app.
 
 ## Development
 
-- Follow standard Python best practices.
-- Add new tools or retrieval methods by extending the `app/functions.py` or `app/knowledge.py` modules.
-- Use the provided logging and configuration utilities for consistency.
-
 ## Contributing
 
-Pull requests and issues are welcome! Please ensure code is well-documented and tested.
-
 ## License
-
-[Specify your license here]
-
----
-
-For more details, see code comments and docstrings throughout the repository.

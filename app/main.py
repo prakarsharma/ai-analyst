@@ -14,6 +14,10 @@ from utils.logging import logger
 
 
 class chatbot:
+    """
+    This class defines a chatbot that uses an augmented-generation pipeline to generate responses to user queries.
+    It uses the ReAct framework to arrive at an answer iteratively.
+    """
     def __init__(self, 
                  timestamp:str, 
                  max_react_iterations:int=10):
@@ -35,6 +39,14 @@ class chatbot:
                get_context:bool=False, 
                analyze:bool=False, 
                plan:bool=False) -> Dict:
+        """
+        Generates a response to the user's query using the augmented-generation pipeline.
+        :param query: user's query.
+        :param get_context: Whether to retrieve context for the query (default: False).
+        :param analyze: Whether to analyze the query (default: False).
+        :param plan: Whether to augment the response with a thought process (default: False).
+        :return: A dictionary of the response message.
+        """
         try:
             logger.success("User: {}", query)
             prompt = self.generation_pipeline.prompt(query,
@@ -118,7 +130,7 @@ class AugmentedGenerationPipeline:
         :param analysis_augmentation: Whether to augment the prompt with analysis results (default: False).
         :param thought_augmentation: Whether to augment the prompt with a thought process (default: False).
         :param kwargs: Additional keyword arguments for the prompt.
-        :return: A dictionary containing the generated prompt.
+        :return: A dictionary of the generated prompt.
         """
         logger.info("Generating prompt for query: '{}'", query.replace("'", "\\'").replace('"', '\\"'))
         prompt_builder = f"Query: {query}"
@@ -159,6 +171,13 @@ class AugmentedGenerationPipeline:
         return prompt_builder
 
     def generate_chat(self, chat:chat_api_message, force_function_call=False, **kwargs) -> Dict:
+        """
+        Generates a response to the user's query using the LLM.
+        :param chat: A chat_api_message object to store the conversation history.
+        :param force_function_call: Whether to force the LLM to call a function (default: False).
+        :param kwargs: Additional keyword arguments for the LLM request.
+        :return: A dictionary of the response message.
+        """
         logger.info("Generating response")
         if force_function_call:
             kwargs["allowed_function_names"] = [tool["name"] for tool in self.tools]
@@ -172,6 +191,10 @@ class AugmentedGenerationPipeline:
     def use_tool(self, name:str, args:Dict, **kwargs) -> Dict:
         """
         Uses the tools defined in the pipeline to perform actions.
+        :param name: The name of the tool to be used.
+        :param args: The arguments to be passed to the tool.
+        :param kwargs: Additional keyword arguments for the tool.
+        :return: A dictionary of the response from the tool.
         """
         response = {}
         if name:
