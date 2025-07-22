@@ -6,6 +6,14 @@ from loguru import logger
 from utils.config import conf
 
 def init_logger(name:str):
+    """
+    Initializes the logger with a specified name.
+    The logger will log messages to a file and to the console.
+    The log file will be stored in the path specified in the configuration.
+    The log file will be named 'log_<name>.log'.
+    The logger will log messages with the level 'DEBUG' to the file and level 
+    'SUCCESS' to the console. Errors will be logged to stderr.
+    """
     logger.remove()
     path = conf["logs"]
     os.makedirs(path, exist_ok=True)

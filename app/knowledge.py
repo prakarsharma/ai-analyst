@@ -50,6 +50,9 @@ class ContextStore:
 
     @property
     def n_docs(self) -> int:
+        """
+        Returns the number of documents stored in the vector database.
+        """
         return self.db.n_docs
 
     def chunk_document(self, document:str) -> List[str]:
@@ -188,6 +191,7 @@ class ContextStore:
         search_result = self.db.top_matches(query_text, top_n, filtering, **metadata)
         matches = search_result["documents"]
         logger.info("Retrieved {} relevant chunks", len(matches))
+        logger.debug("Retrieved chunks:\n{}", "\n".join(matches))
         return matches
 
 

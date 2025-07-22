@@ -6,7 +6,7 @@ from models_api.generate import llm
 
 def parse_cli_args() -> argparse.Namespace:
     """
-    Parse command line arguments.
+    Parses command line arguments.
     """
     parser = argparse.ArgumentParser(description="Test LLM API")
     parser.add_argument("--prompt", type=str, required=True, help="Prompt to send to the LLM API")
@@ -15,7 +15,7 @@ def parse_cli_args() -> argparse.Namespace:
 
 def generate_response(prompt:str) -> Union[str, Dict]:
     """
-    Generate a response using the LLM.
+    Generates a response using the LLM.
     """
     model = llm("You are a helpful assistant.")
     response_schema = {

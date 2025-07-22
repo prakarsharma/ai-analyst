@@ -10,9 +10,13 @@ from utils.logging import logger
 
 
 class Tools:
+    """
+    This class defines a set of tools that can be used to interact with BigQuery, tabulate results, and generate plots.
+    """
     def __init__(self, use_reminder:bool=True):
         """
-        Initialize the Tools class with default values.
+        Initializes the Tools class with default values.
+        :param use_reminder: Whether to send ruleset as a reminder at query generation (default: True).
         """
         self.use_reminder = use_reminder
         if self.use_reminder:
@@ -28,6 +32,7 @@ class Tools:
         :param query: The SQL query to execute on the BigQuery table.
         :return: A list of dictionaries containing the queried data or an error message.
         :raises ValueError: If the table ID does not match the expected table ID in the configuration.
+        :raises Exception: If the query returns more than a particular number of rows.
         """
         logger.info("Using tool 'fetch_data' with arguments:\n table_id = {},\n query = {}", "\n".join(table_id), query)
         metadata = [metadata["table_id"] for table, metadata in conf["bigquery"]["tables"].items()]

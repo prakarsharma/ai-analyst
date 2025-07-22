@@ -43,7 +43,7 @@ class llm:
 
     def generate(self, prompt:str, **kwargs) -> Union[str, Dict]:
         """
-        Generate a response from the LLM based on the provided prompt.
+        Generates a response from the LLM based on the provided prompt.
         :param prompt: The input prompt for the LLM.
         :param gen_kwargs: Additional keyword arguments for the generation request.
         :return: A dictionary containing the LLM's response.
