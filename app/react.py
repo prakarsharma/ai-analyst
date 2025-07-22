@@ -6,7 +6,7 @@ from utils.logging import init_logger
 
 def parse_cli_args() -> argparse.Namespace:
     """
-    Parse command line arguments.
+    Parses command line arguments.
     """
     parser = argparse.ArgumentParser(description="Chatbot CLI for generating responses.")
     parser.add_argument("--query", type=str, required=True, help="Your query")
@@ -22,7 +22,7 @@ def react(timestamp:str,
           analyze:bool=False, 
           plan:bool=False):
     """
-    Start a chatbot process.
+    Starts a chatbot process.
     """
     bot = chatbot(timestamp)
     response = bot.answer(query=query, 

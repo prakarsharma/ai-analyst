@@ -8,31 +8,57 @@ from utils.utils import bigquery_job
 
 
 def get_env_var(loader, node) -> str:
+    """
+    Retrieves the value of an environment variable by its name in the yaml node.
+    If the environment variable is not set, an empty string is returned.
+    """
     name = loader.construct_scalar(node)
     return os.environ.get(name, "")
 
 def concat(loader, node) -> str:
+    """
+    Concatenates a sequence of strings from a yaml node into a single string.
+    """
     seq = loader.construct_sequence(node)
     return ''.join([str(_) for _ in seq])
 
 def read_text(loader, node) -> str:
+    """
+    Reads the contents of a text file specified in the yaml node.
+    The path to the file is expected to be a string.
+    """
     path = loader.construct_scalar(node)
     with open(path, "r") as f:
         text = f.read()
     return text
 
 def read_csv(loader, node) -> pd.DataFrame:
+    """
+    Reads a CSV file specified in the yaml node and return it as a pandas DataFrame.
+    The path to the CSV file is expected to be a string.
+    """
     path = loader.construct_scalar(node)
     dataframe = pd.read_csv(path)
     return dataframe
 
 def read_json(loader, node) -> Union[List,Dict]:
+    """
+    Reads a JSON file specified in the yaml node and return its contents.
+    The path to the JSON file is expected to be a string.
+    """
     path = loader.construct_scalar(node)
     with open(path, "r") as f:
         contents = json.loads(f.read())
     return contents
 
 def get_or_read_schema(loader, node) -> Dict:
+    """
+    Gets or reads the schema of a BigQuery table or a CSV file.
+    If a CSV file is provided, it reads the schema from the CSV.
+    If a table_id is provided, it queries the BigQuery INFORMATION_SCHEMA to get the schema.
+    The node can contain either a 'csv' key with the path to a CSV file or a 'table_id' key with the format 'project_id.dataset.table'.
+    If neither is provided, a NotImplementedError is raised.
+    """
     kwargs = loader.construct_mapping(node)
     csv = kwargs.get("csv")
     table_id = kwargs.get("table_id")
