@@ -1,6 +1,7 @@
 from typing import Dict
 
 from models_api.system_prompt import data_analyst
+from models_api.system_prompt import one_shot_system_prompt
 from models_api.function_template import tools
 from models_api.gemini_api import chat_request, chat_api_message
 from models_api.generate import llm
@@ -16,7 +17,8 @@ from utils.logging import logger
 class chatbot:
     def __init__(self, 
                  timestamp:str, 
-                 max_react_iterations:int=10):
+                 max_react_iterations:int=10,
+                 **kwargs: dict):
         """
         Initializes the chatbot.
         :param timestamp: A timestamp in the format YYYYMMDD_HHMMSS.
@@ -184,3 +186,55 @@ class AugmentedGenerationPipeline:
                 # if "query" in args:
                     # response["query"] = args["query"]
         return response
+
+    def dump_information(self) -> str:
+            """
+            Dumps all knowledge and metadata information required for SQL generation.
+            Returns a single concatenated string containing:
+              - Knowledge: contents of external documents defined in conf["vector_database"]["document_uris"]
+              - Metadata: BigQuery tables, descriptions, schemas, primary keys, and join keys
+            """
+            info_parts = []
+    
+            # --- Knowledge ---
+            try:
+                knowledge_docs = conf["vector_database"]["document_uris"]
+                if knowledge_docs:
+                    info_parts.append("### Knowledge\n")
+                    for i,doc_path in enumerate(knowledge_docs):
+                        try:
+                            info_parts.append(f" Reference Information {i+1} :\n{read_gcs_file(doc_path)}")
+                        except Exception as e:
+                            logger.warning("Could not read knowledge document '{}': {}", doc_path, e)
+            except Exception as e:
+                logger.warning("Could not load knowledge from config: {}", e)
+    
+            # --- Metadata: Tables ---
+            bigquery_conf = conf.get("bigquery", {})
+            tables_conf = bigquery_conf.get("tables", {})
+            if tables_conf:
+                info_parts.append("\n\n### Metadata: Tables\n")
+                for table_name, table_meta in tables_conf.items():
+                    info_parts.append(f"Table: {table_name}")
+                    info_parts.append(f"  Table ID: {table_meta.get('table_id', '')}")
+                    info_parts.append(f"  Description:\n{table_meta.get('description', '')}")
+                    schema_text = table_meta.get("schema", "")
+                    if isinstance(schema_text, (dict, list)):
+                        schema_text = str(schema_text)  # fallback if schema is structured
+                    info_parts.append(f"  Schema:\n{schema_text}")
+                    info_parts.append(f"  Primary Keys: {table_meta.get('primary_key', [])}\n")
+    
+            # --- Metadata: Joins ---
+            joins_conf = bigquery_conf.get("joins", {})
+            if joins_conf:
+                info_parts.append("\n### Metadata: Joins\n")
+                for join_name, join_meta in joins_conf.items():
+                    info_parts.append(f"Join: {join_name}")
+                    info_parts.append(f"  Left Table: {join_meta.get('left', '')}")
+                    info_parts.append(f"  Right Table: {join_meta.get('right', '')}")
+                    info_parts.append(f"  Left Keys: {join_meta.get('left_on', [])}")
+                    info_parts.append(f"  Right Keys: {join_meta.get('right_on', [])}\n")
+    
+            dump = "\n".join(info_parts)
+            logger.info("Information dump generated for SQL tasks (size={} chars)", len(dump))
+            return dump
