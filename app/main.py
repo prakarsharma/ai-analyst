@@ -1,6 +1,7 @@
 from typing import Dict
 
 from models_api.system_prompt import data_analyst
+from models_api.system_prompt import one_shot_system_prompt
 from models_api.function_template import tools
 from models_api.gemini_api import chat_request, chat_api_message
 from models_api.generate import llm
@@ -16,7 +17,8 @@ from utils.logging import logger
 class chatbot:
     def __init__(self, 
                  timestamp:str, 
-                 max_react_iterations:int=10):
+                 max_react_iterations:int=10,
+                 **kwargs: dict):
         """
         Initializes the chatbot.
         :param timestamp: A timestamp in the format YYYYMMDD_HHMMSS.
