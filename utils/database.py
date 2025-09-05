@@ -3,6 +3,7 @@ from sqlite3 import connect
 from contextlib import contextmanager
 from typing import List, Dict
 
+
 from utils.config import conf
 
 
@@ -33,13 +34,16 @@ class Database:
     This class provides an interface to interact with a SQLite database.
     It allows for creating tables, inserting records, and querying data.
     """
-    def __init__(self, table_name:str):
+    def __init__(self, database_name:str):
         """
         Initializes the Database instance with the table name and retrieves the database path from configurations.
         The table name should be in the format 'database_name.table_name'.
         """
-        self.table_name = table_name
-        self.DATABASE, self.TABLE = table_name.split(".")
+        if "." in database_name:
+            self.table_fullname = database_name
+            self.DATABASE, self.TABLE = self.table_fullname.split(".")
+        else:
+            self.DATABASE = database_name
         self.database_path = conf["memory"][self.DATABASE]
 
     @contextmanager
@@ -82,9 +86,9 @@ class Database:
             query = f"DROP TABLE IF EXISTS {self.TABLE};"
             self.cursor_object.execute(query)
 
-        if self.table_name not in schema:
-            raise NotImplementedError(f"Schema for table '{self.table_name}' not defined.")
-        schema_ = ",\n".join([" ".join(_) for _ in schema[self.table_name]])
+        if self.table_fullname not in schema:
+            raise NotImplementedError(f"Schema for table '{self.table_fullname}' not defined.")
+        schema_ = ",\n".join([" ".join(_) for _ in schema[self.table_fullname]])
 
         with self.data_definition():
             query = f"""CREATE TABLE {self.TABLE} ({schema_});"""
