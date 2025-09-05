@@ -1,5 +1,6 @@
 import os
 import re
+import gcsfs
 from typing import List, Dict, Optional, Literal, cast
 
 from models_api.vectorize import vectorDB
@@ -8,7 +9,7 @@ from models_api.generate import llm
 from app.eval import llmJudge
 from utils.config import conf
 from utils.logging import logger
-from utils.utils import read_gcs_file, chmod_R
+from utils.utils import read_gcs_file
 
 
 class ContextStore:
@@ -147,7 +148,10 @@ class ContextStore:
         chunks = []
         for uri in self.document_uris:
             logger.info("Chunking document: {}", uri)
-            document = read_gcs_file(uri)
+            fs = gcsfs.GCSFileSystem()
+            with fs.open(uri, "r") as f:
+                document = f.read()
+            document = cast(str, document)
             chunks.extend(self.chunk_document(document))
         if self.annotate_chunks:
             annotated_chunks = self.annotate(chunks)

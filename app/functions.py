@@ -5,7 +5,7 @@ from matplotlib import pyplot as plt
 from typing import List, Dict, Optional
 
 from utils.config import conf
-from utils.utils import bigquery_job
+from utils.bq import bigquery_job
 from utils.logging import logger
 
 
