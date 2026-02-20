@@ -33,7 +33,7 @@ class llm:
             payload_json = json.dumps(payload, indent=4)
             logger.debug("Sending request payload:\n{}", payload_json)
             response:models.Response = request("POST", 
-                                               conf["models"]["llm"]["gateway_url"], 
+                                               conf["models"]["llm"]["endpoint"], 
                                                headers=self.headers, 
                                                json=payload)
         except Exception as err:
