@@ -1,4 +1,3 @@
-import os
 import json
 from requests import models
 from typing import List, Dict, Union
@@ -8,10 +7,9 @@ from models_api.utils import record_usage_metadata
 from utils.config import conf
 from utils.logging import logger
 
-
 class chat_request:
     """
-    This class defines a request to the LLM API.
+    This class defines a request to the OpenAI Responses API.
     It provides methods to construct the payload for the API request and parse the response.
     """
     def __init__(self, system_prompt:str, **kwargs):
@@ -19,7 +17,6 @@ class chat_request:
         Initializes the chat_request with a system prompt and optional parameters.
         :param system_prompt: The system prompt to be used in the request.
         :param kwargs: Additional keyword arguments for the request, such as tools, maxOutputTokens, temperature, and topP.
-        :raises NotImplementedError: If the PLATFORM environment variable is not set to 'vertexai' or 'element'.
         :raises ConnectionError: If the usage metadata is not found in the response.
         :raises ValueError: If the response from the LLM API is corrupt or departs from the expected schema.
         """
@@ -34,72 +31,48 @@ class chat_request:
         """
         Extracts usage metadata from the response object.
         :param response: The response object from the LLM API request.
-        :return: A dictionary containing the usage metadata, including promptTokenCount, candidatesTokenCount, and totalTokenCount.
-        :raises ConnectionError: If the usage metadata is not found in the response.
+        :return: A dictionary containing usage counters compatible with cost.requested_tokens table.
+        :raises ConnectionError: If usage metadata is not found in the response.
         """
-        counters = ["promptTokenCount", "candidatesTokenCount", "totalTokenCount"]
+        counters = ["input_tokens", "output_tokens"]
         try:
-            usage_metadata = response["usageMetadata"]
-            return {counter: usage_metadata.get(counter, 0) for counter in counters} # default to 0 if not present # candidate toke counter is absent if the LLM generates an empty string
+            usage = response["usage"]
+            return {counter: usage.get(counter, 0) for counter in counters} # default to 0 if not present
         except KeyError:
             raise ConnectionError("!bad gateway response! Usage metadata not found.")
 
     def json(self, chat_messages:List[Dict]) -> Dict:
         """
-        Constructs the JSON payload for the LLM API request and inserts the chat messages.
+        Constructs the JSON payload for the OpenAI Responses API request and inserts the chat messages.
         :param chat_messages: A list of dictionaries of the chat messages.
         :return: A dictionary of the payload JSON for the API request.
         """
         model_params = {
-            "contents": chat_messages,
-            "system_instruction": {
-                "parts": [
-                    {
-                        "text": self.system_prompt
-                    }
-                ]
+            "input": chat_messages,
+            "instructions": self.system_prompt
             }
-        }
         generation_config = {
-            "responseModalities": ["TEXT"], 
-            "maxOutputTokens": self.maxOutputTokens, 
-            "temperature": self.temperature, 
-            "topP": self.topP
-        }
-        model_params.update({"generation_config": generation_config})
-        safety_setings = [
-            {
-                "category": "HARM_CATEGORY_HARASSMENT", 
-                "threshold": "BLOCK_NONE"
-            },
-            {
-                "category": "HARM_CATEGORY_HATE_SPEECH", 
-                "threshold": "BLOCK_NONE"
-            },
-            {
-                "category": "HARM_CATEGORY_DANGEROUS_CONTENT", 
-                "threshold": "BLOCK_NONE"
-            },
-            {
-                "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", 
-                "threshold": "BLOCK_NONE"
+            "max_output_tokens": self.maxOutputTokens,
+            "temperature": self.temperature,
+            "top_p": self.topP
             }
-        ]
-        model_params.update({"safetySettings": safety_setings})
+        model_params.update(generation_config)
         if self.tools:
             tools = {
                 "tools": [
                     {
-                        "function_declarations": self.tools
+                        "type": "function",
+                        **tool
                     }
-                ]
-            }
+                    for tool in self.tools
+                    ]
+                }
             model_params.update(tools)
         return model_params
 
     def _payload(self, chat_messages:List[Dict], **kwargs) -> Dict:
         """
-        Constructs the payload for the LLM API request based on the chat messages and additional parameters.
+        Constructs the payload for the OpenAI Responses API request.
         :param chat_messages: A list of dictionaries of chat messages.
         :param kwargs: Additional keyword arguments for the payload, such as allowed_function_names and response_schema.
         :return: A dictionary of the payload JSON for the API request.
@@ -107,56 +80,48 @@ class chat_request:
         model_params = self.json(chat_messages)
         allowed_function_names = kwargs.get("allowed_function_names", [])
         if allowed_function_names:
-            config = {
-                "tool_config": {
-                    "function_calling_config": {
-                        "mode": "ANY", 
-                        "allowed_function_names": allowed_function_names
+            if len(allowed_function_names) == 1:
+                model_params["tool_choice"] = {
+                    "type": "function",
+                    "name": allowed_function_names[0],
+                    }
+            else:
+                model_params["tool_choice"] = "required"
+        response_schema = kwargs.get("response_schema", {})
+        if response_schema:
+            model_params["text"] = {
+                "format": {
+                    "type": "json_schema",
+                    "name": "response_schema",
+                    "schema": response_schema,
+                    "strict": True,
                     }
                 }
-            }
-            model_params.update(config)
-        response_schema = kwargs.get("response_schema", [])
-        if response_schema:
-            generation_config = {
-                "responseMimeType": "application/json",
-                "responseSchema": response_schema
-            }
-            model_params["generation_config"].update(generation_config)
         return model_params
 
     def payload(self, chat_messages:List[Dict], **kwargs) -> Dict:
         """
-        Constructs the payload for the LLM API request based on the chat messages and additional parameters.
+        Constructs the payload for the OpenAI Responses API request.
         :param chat_messages: A list of dictionaries of chat messages.
         :param kwargs: Additional keyword arguments for the payload.
         :return: A dictionary of the payload JSON for the API request.
         """
         json = self._payload(chat_messages, **kwargs)
-        if os.environ["PLATFORM"] == "vertexai":
-            return json
-        elif os.environ["PLATFORM"] == "element":
-            return {
+        return {
             "model": conf["models"]["llm"]["name"],
-            "task": "generateContent",
-            "model-params": json
+            **json
             }
-        else:
-            err_msg = f"""!unknown platform!
-            {os.environ["PLATFORM"]}
-            Please set the PLATFORM environment variable to either 'vertexai' or 'element'."""
-            raise NotImplementedError(err_msg)
 
     @staticmethod
     def parse_response(response_object:models.Response) -> Dict:
         """
-        Parses the response from the LLM API and extracts the relevant content.
+        Parses the response from the OpenAI Responses API and extracts the relevant content.
         :param response_object: The response object from the LLM API request.
         :return: A dictionary containing the response content and mode.
         """
         response_json = response_object.json()
         response_json_str = json.dumps(response_json, ensure_ascii=True, indent=4)
-        if "error" in response_json:
+        if response_json.get("error"):
             err_msg = f""""!bad gateway response!"
             {response_json_str}
             """
@@ -166,17 +131,53 @@ class chat_request:
 
             record_usage_metadata(chat_request.get_usage_metadata(response_json))
 
-            part:Dict[str,Union[str,Dict]] = response_json["candidates"][0]["content"]["parts"][0]
+            output = response_json.get("output", [])
 
-            for mode in ["text","functionCall"]:
-                if mode in part:
-                    response:Union[str,Dict] = part.get(mode, "")
-                    break
-            logger.info("Parsed response part:\n mode: {}\n response: {}", mode, response)
-            return {
-                "mode": mode, 
-                "response": response
+            for item in output:
+                if item.get("type") == "function_call":
+                    arguments = item.get("arguments", "{}")
+                    try:
+                        args = arguments if isinstance(arguments, dict) else json.loads(arguments)
+                    except json.JSONDecodeError:
+                        args = {}
+                    response:Union[str,Dict] = {
+                        "name": item.get("name", ""),
+                        "args": args,
+                        "call_id": item.get("call_id"),
+                    }
+                    mode = "functionCall"
+                    logger.info("Parsed response part:\n mode: {}\n response: {}", mode, response)
+                    return {
+                        "mode": mode,
+                        "response": response,
+                    }
+
+            text_chunks:List[str] = []
+            for item in output:
+                if item.get("type") == "message":
+                    for content_item in item.get("content", []):
+                        if content_item.get("type") in ["output_text", "text"] and "text" in content_item:
+                            text_chunks.append(content_item.get("text", ""))
+
+            if text_chunks:
+                mode = "text"
+                response = "\n".join(text_chunks).strip()
+                logger.info("Parsed response part:\n mode: {}\n response: {}", mode, response)
+                return {
+                    "mode": mode,
+                    "response": response,
                 }
+
+            if response_json.get("output_text"):
+                mode = "text"
+                response = response_json.get("output_text", "")
+                logger.info("Parsed response part:\n mode: {}\n response: {}", mode, response)
+                return {
+                    "mode": mode,
+                    "response": response,
+                }
+
+            raise KeyError("No supported output content in response.")
         except (KeyError, IndexError) as err:
             err_msg = f"""!corrupt gateway response!
             {response_json_str}
@@ -189,6 +190,7 @@ class chat_request:
         Constructs a function response schema for the LLM API.
         :param function_name: The name of the function that generated the response.
         :param response: The response content from the function.
+        :param call_id: OpenAI function call identifier.
         :return: A dictionary containing the function response object.
         """
         logger.info("Function response object:\n{}", response)
@@ -200,5 +202,6 @@ class chat_request:
                     "name": function_name,
                     "content": response
                 }
-            }
+            },
+            "call_id": call_id
         }

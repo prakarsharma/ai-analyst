@@ -1,6 +1,6 @@
 import os
+import toml
 from typing import Dict
-
 
 def load_wmt_llm_gateway_secret():
     """
@@ -22,10 +22,25 @@ def load_gcloud_oauth_token():
     cred.refresh(auth_req) # need to refresh credentials to populate those
     os.environ['ACCESS_TOKEN'] = cred.token
 
+def load_openai_api_key(secrets_path:str="/home/jupyter/sao-chat/.secrets/.secrets.toml") -> Dict[str,str]:
+    """
+    Loads the OpenAI API key from a local TOML file and returns Bearer auth headers.
+    :param secrets_path: Path to the secrets TOML file.
+    :return: Authorization header dictionary in Bearer format.
+    """
+    secrets = toml.load(secrets_path)
+    api_key = secrets.get("openai", {}).get("api_key")
+    if not api_key:
+        raise KeyError(f"OpenAI API key not found in {secrets_path}.")
+    os.environ['OPENAI_API_KEY'] = api_key
+    return {"Authorization": f"Bearer {api_key}"}
+
 def authentication() -> Dict[str,str]:
     """
     Returns the API call authentication headers for a specific platform.
     """
+    if os.environ["PLATFORM"] == "openai":
+        return load_openai_api_key()
     if os.environ["PLATFORM"] == "vertexai":
         load_gcloud_oauth_token()
         access_token:str = os.environ["ACCESS_TOKEN"]

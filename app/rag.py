@@ -1,7 +1,7 @@
 import argparse
 from datetime import datetime
 
-from models_api.gemini_api import chat_api_message
+from models_api.chat_message import chat_api_message
 from app.main import AugmentedGenerationPipeline
 from utils.logging import init_logger
 

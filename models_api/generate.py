@@ -1,8 +1,13 @@
+import os
 import json
 from requests import request, models
 from typing import List, Dict, Union
 
-from models_api.gemini_api import chat_request, chat_api_message
+from models_api.chat_message import chat_api_message
+if os.environ.get("PLATFORM") == "openai":
+    from models_api.openai_api import chat_request
+else:
+    from models_api.gemini_api import chat_request
 from utils.secret import authentication
 from utils.config import conf
 from utils.logging import logger
@@ -33,7 +38,7 @@ class llm:
             payload_json = json.dumps(payload, indent=4)
             logger.debug("Sending request payload:\n{}", payload_json)
             response:models.Response = request("POST", 
-                                               conf["models"]["llm"]["gateway_url"], 
+                                               conf["models"]["llm"]["endpoint"], 
                                                headers=self.headers, 
                                                json=payload)
         except Exception as err:

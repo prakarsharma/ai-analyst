@@ -161,6 +161,7 @@ cython_debug/
 
 # streamlit
 .streamlit/secrets.toml
+.secrets/secrets.toml
 
 # chroma db
 chroma.sqlite3
