@@ -1,8 +1,13 @@
+import os
 import json
 from requests import request, models
 from typing import List, Dict, Union
 
-from models_api.gemini_api import chat_request, chat_api_message
+from models_api.chat_message import chat_api_message
+if os.environ.get("PLATFORM") == "openai":
+    from models_api.openai_api import chat_request
+else:
+    from models_api.gemini_api import chat_request
 from utils.secret import authentication
 from utils.config import conf
 from utils.logging import logger
