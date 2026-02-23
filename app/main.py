@@ -1,8 +1,14 @@
-from typing import Dict
+import os
+from typing import Dict, Union
 
 from models_api.system_prompt import data_analyst
 from models_api.function_template import tools
-from models_api.gemini_api import chat_request, chat_api_message
+from models_api.chat_message import chat_api_message, gemini_chat_api_message, openai_chat_api_message
+
+if os.environ.get("PLATFORM") == "openai":
+    from models_api.openai_api import chat_request
+else:
+    from models_api.gemini_api import chat_request
 from models_api.generate import llm
 from app.functions import Tools
 from app.knowledge import RetrievalPipeline
@@ -170,7 +176,7 @@ class AugmentedGenerationPipeline:
         logger.info("Prompt:\n{}", prompt_builder)
         return prompt_builder
 
-    def generate_chat(self, chat:chat_api_message, force_function_call=False, **kwargs) -> Dict:
+    def generate_chat(self, chat:Union[gemini_chat_api_message, openai_chat_api_message], force_function_call=False, **kwargs) -> Dict:
         """
         Generates a response to the user's query using the LLM.
         :param chat: A chat_api_message object to store the conversation history.
@@ -203,7 +209,11 @@ class AugmentedGenerationPipeline:
                 response["EOS"] = True
                 response[name] = function_return_object
             else:
-                response = chat_request.function_response(name, function_return_object)
+                call_id = kwargs.get("call_id", "")
+                if call_id:
+                    response = chat_request.function_response(name, function_return_object, call_id=call_id)
+                else:
+                    response = chat_request.function_response(name, function_return_object)
                 # if "query" in args:
                     # response["query"] = args["query"]
         return response
