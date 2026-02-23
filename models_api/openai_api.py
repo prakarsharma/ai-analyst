@@ -121,7 +121,7 @@ class chat_request:
         """
         response_json = response_object.json()
         response_json_str = json.dumps(response_json, ensure_ascii=True, indent=4)
-        if "error" in response_json:
+        if response_json.get("error"):
             err_msg = f""""!bad gateway response!"
             {response_json_str}
             """
